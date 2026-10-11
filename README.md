@@ -33,3 +33,8 @@ Model names change often, so the server asks each provider which models it curre
 Dark-first glass UI with a light theme toggle, bento-style home screen, photo-first dish cards with match rings,
 floating bottom bar, animated gradient background, smooth step transitions (View Transitions API where supported),
 Instrument Serif + Bricolage Grotesque + Manrope fonts, and inline SVG icons (no extra downloads).
+
+## Reliability
+Requests are "hedged": the best provider starts first, and if it is slow (7 s) or fails, the next provider starts
+immediately while the first keeps running. The first valid answer wins. Providers that were overloaded are moved
+to the back of the queue for 5 minutes, and ones with a bad key or no quota are paused for 10 minutes.

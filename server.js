@@ -184,7 +184,7 @@ async function callGemini(p, model, { system, text, images, maxTokens }) {
         ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
       },
     }),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(50000),
   });
   let r = await send(true);
   if (r.status === 400) r = await send(false); // this model may not allow turning thinking off
@@ -207,56 +207,72 @@ async function callOpenAICompat(p, model, { system, text, images, maxTokens }) {
       model, max_tokens: Math.max(maxTokens, 5000), temperature: 0.6,
       messages: [{ role: 'system', content: system }, { role: 'user', content }],
     }),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(50000),
   });
   const d = await readJson(r);
   return d.choices?.[0]?.message?.content || '';
 }
 
 const callProvider = (p, model, args) => (p.type === 'gemini' ? callGemini(p, model, args) : callOpenAICompat(p, model, args));
-async function callWithRetry(p, model, args) {
-  for (let i = 0; ; i++) {
-    try { return await callProvider(p, model, args); }
-    catch (err) {
-      if (i < 2 && [500, 502, 503, 504].includes(err.status)) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; }
-      throw err;
-    }
-  }
-}
+// Providers that rejected our key / ran out of quota are paused for a while
+const providerBad = new Map();
+const provBad = (n) => (providerBad.get(n) || 0) > Date.now();
+const STAGGER_MS = Number(process.env.STAGGER_MS) || 7000;
+const slowUntil = new Map(); // providers that were overloaded or slow recently go to the back for 5 minutes
+const isSlow = (n) => (slowUntil.get(n) || 0) > Date.now();
 
+// Hedged requests: start the best provider; if it is slow or fails, start the next one right away
+// (without cancelling the first). The first valid answer wins, so one overloaded provider never blocks the app.
 async function askAI({ system, text, images = [], maxTokens = 3500 }) {
   const wantsVision = images.length > 0;
-  const names = (wantsVision ? VISION_ORDER : TEXT_ORDER).filter((n) => PROVIDERS[n]?.key);
+  const names = (wantsVision ? VISION_ORDER : TEXT_ORDER).filter((n) => PROVIDERS[n]?.key && !provBad(n))
+    .sort((x, y) => Number(isSlow(x)) - Number(isSlow(y)));
   if (!names.length) {
-    const e = new Error('No AI provider key found on the server. Check the variable names on Render.');
+    const e = new Error('No working AI provider is available right now. Check your API keys on Render.');
     e.detail = `Keys found: ${configured().join(', ') || 'none'}`;
     throw e;
   }
-  const failures = [];
-  const startedAt = Date.now();
-  outer: for (const name of names) {
-    const p = PROVIDERS[name];
-    const models = (await modelsFor(name, wantsVision)).slice(0, 4);
-    for (const model of models) {
-      if (Date.now() - startedAt > 85000) { failures.push('Stopped: taking too long'); break outer; }
-      try {
-        const raw = await callWithRetry(p, model, { system, text, images, maxTokens });
-        const out = parseJson(raw);
-        out._provider = `${name}:${model}`;
-        console.log(`AI ok via ${name} (${model})`);
-        return out;
-      } catch (err) {
-        const msg = redact(err.message);
-        failures.push(`${name} (${model}): ${msg}`);
-        console.error(`AI ${name} (${model}) failed: ${msg}`);
-        if (err.status === 404 || (name === 'openrouter' && [400, 403, 404].includes(err.status))) markBad(name, model, 60);
-        if (err.status === 401 || err.status === 429 || (err.status === 403 && name !== 'openrouter')) break; // key or quota problem: skip this provider
-      }
-    }
-  }
-  const e = new Error('Could not get an answer from any AI provider.');
-  e.detail = failures.slice(0, 8).join('\n');
-  throw e;
+  const lists = await Promise.all(names.map((n) => modelsFor(n, wantsVision).then((m) => m.slice(0, 3))));
+  const attempts = [];
+  for (let round = 0; round < 3; round++) names.forEach((n, k) => { if (lists[k][round]) attempts.push({ name: n, model: lists[k][round] }); });
+  if (!attempts.length) throw new Error('No AI model is available for this request.');
+
+  return new Promise((resolve, reject) => {
+    const failures = [];
+    let next = 0, running = 0, finished = false;
+    const finish = (fn, v) => { if (finished) return; finished = true; clearTimeout(deadline); fn(v); };
+    const fail = () => {
+      const e = new Error('Could not get an answer from any AI provider.');
+      e.detail = failures.slice(0, 8).join('\n'); finish(reject, e);
+    };
+    const deadline = setTimeout(() => { failures.push('Stopped: taking too long'); fail(); }, 95000);
+
+    const launch = () => {
+      if (finished || next >= attempts.length) return false;
+      const a = attempts[next++]; const p = PROVIDERS[a.name]; running++;
+      let settled = false;
+      const settle = () => { if (settled) return; settled = true; running--; if (!finished && !launch() && running === 0) fail(); };
+      setTimeout(() => { if (!settled && !finished) launch(); }, STAGGER_MS); // slow? bring in a backup
+      callProvider(p, a.model, { system, text, images, maxTokens })
+        .then((raw) => {
+          const out = parseJson(raw);
+          out._provider = `${a.name}:${a.model}`;
+          console.log(`AI ok via ${a.name} (${a.model})`);
+          finish(resolve, out);
+        })
+        .catch((err) => {
+          const msg = redact(err.message);
+          failures.push(`${a.name} (${a.model}): ${msg}`);
+          console.error(`AI ${a.name} (${a.model}) failed: ${msg}`);
+          if ([500, 502, 503, 504].includes(err.status) || err.name === 'TimeoutError') slowUntil.set(a.name, Date.now() + 5 * 60000);
+          if (err.status === 404 || (a.name === 'openrouter' && [400, 403, 404].includes(err.status))) markBad(a.name, a.model, 60);
+          if (err.status === 401 || err.status === 429 || (err.status === 403 && a.name !== 'openrouter')) providerBad.set(a.name, Date.now() + 10 * 60000);
+        })
+        .finally(settle);
+      return true;
+    };
+    launch();
+  });
 }
 
 // Open /api/diagnose in your browser to see which providers work (add ?pw=YOURPASSWORD if you set one)
