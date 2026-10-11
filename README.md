@@ -28,3 +28,8 @@ Model names change often, so the server asks each provider which models it curre
 - Interactive cooking mode: gather-ingredients checklist, tap-to-add ingredients per step, flame meter,
   animated step visuals, timers that keep running across steps, swipe or arrow keys to move,
   read-aloud (en-IN voice) and voice commands ("next", "back", "repeat", "start timer").
+
+## Design
+Dark-first glass UI with a light theme toggle, bento-style home screen, photo-first dish cards with match rings,
+floating bottom bar, animated gradient background, smooth step transitions (View Transitions API where supported),
+Instrument Serif + Bricolage Grotesque + Manrope fonts, and inline SVG icons (no extra downloads).
