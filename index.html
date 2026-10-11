@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2E6B47">
+<title>PantryChef – cook with what you have</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF3EA; --paper:#fff; --ink:#12261B; --muted:#5B6F61; --line:#CBD8C6;
+  --leaf:#2E6B47; --leaf-dark:#1F4D32; --lemon:#F5C83B; --radish:#D1435B; --mint:#DCEBD7;
+  --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+button,select,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
+.wrap{max-width:780px;margin:0 auto;padding:0 18px 80px}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
+.logo{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;display:flex;gap:8px;align-items:center}
+.logo span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--lemon);font-size:1.1rem}
+nav{display:flex;gap:4px;background:var(--mint);padding:4px;border-radius:999px}
+nav button{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:700;color:var(--muted)}
+nav button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.1rem,6.5vw,3.3rem);line-height:1.02;letter-spacing:-.03em;margin:26px 0 10px;max-width:14ch}
+.lead{color:var(--muted);font-size:1.1rem;margin:0 0 24px;max-width:46ch}
+h2{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin:34px 0 12px}
+
+/* drop zone */
+.drop{display:block;border:2px dashed var(--leaf);border-radius:22px;background:var(--paper);padding:26px 18px;text-align:center;transition:background .15s,border-color .15s}
+.drop.over{background:var(--mint);border-style:solid}
+.drop strong{font-family:var(--display);font-size:1.25rem;display:block}
+.drop p{margin:4px 0 14px;color:var(--muted)}
+.drop-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:11px 18px;font-weight:700;background:var(--ink);color:#fff;display:inline-flex;align-items:center;gap:8px}
+.btn.ghost{background:var(--mint);color:var(--ink)}
+.btn.lemon{background:var(--lemon);color:var(--ink)}
+.btn.big{width:100%;justify-content:center;padding:16px;font-size:1.1rem;border-radius:14px;margin-top:18px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:16px}
+.thumb{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--mint);border:3px solid #fff;box-shadow:0 2px 0 var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(18,38,27,.85);color:#fff;font-size:15px;line-height:1}
+
+/* options */
+.panel{background:var(--paper);border-radius:18px;padding:18px;margin-top:16px;border:1px solid var(--line)}
+label.field{display:block;font-weight:700;margin-bottom:6px}
+textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdf9;resize:vertical;min-height:70px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
+select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fbfdf9}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:#fbfdf9;padding:7px 14px;border-radius:999px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--leaf);border-color:var(--leaf);color:#fff}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fbfdf9;font-size:1.2rem;font-weight:700}
+.stepper output{min-width:36px;text-align:center;font-weight:700;font-size:1.1rem}
+
+/* ingredients found */
+.found{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ing{display:inline-flex;gap:6px;align-items:center;background:var(--mint);padding:6px 6px 6px 13px;border-radius:999px;font-weight:500}
+.ing button{border:0;background:var(--paper);width:22px;height:22px;border-radius:50%;line-height:1;color:var(--muted)}
+.add-ing{display:flex;gap:8px;margin-top:12px}
+.add-ing input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbfdf9;min-width:0}
+
+/* dishes */
+.dishes{display:grid;gap:14px}
+.dish{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;grid-template-columns:56px 1fr;gap:4px 14px}
+.dish .emo{grid-row:span 2;font-size:2.4rem;width:56px;height:56px;display:grid;place-items:center;background:var(--mint);border-radius:16px}
+.dish h3{margin:0;font-family:var(--display);font-size:1.25rem;letter-spacing:-.01em;line-height:1.2}
+.dish .meta{color:var(--muted);font-size:.92rem}
+.dish .desc{grid-column:1/-1;margin:8px 0 0}
+.match{grid-column:1/-1;margin-top:10px}
+.bar{height:8px;border-radius:99px;background:var(--mint);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--leaf);border-radius:99px}
+.matchtxt{display:flex;justify-content:space-between;font-size:.88rem;color:var(--muted);margin-top:5px}
+.miss{grid-column:1/-1;margin-top:8px;font-size:.92rem}
+.miss b{color:var(--radish)}
+.dish-actions{grid-column:1/-1;display:flex;gap:10px;margin-top:12px}
+.dish-actions .btn{flex:1;justify-content:center}
+.heart{flex:0 0 auto!important;width:48px;padding:0!important}
+
+.notice{background:#FFF6D6;border:1px solid var(--lemon);padding:12px 14px;border-radius:12px;margin-top:14px}
+.error{white-space:pre-wrap;word-break:break-word;font-size:.92rem;background:#FBE4E8;border:1px solid var(--radish);padding:12px 14px;border-radius:12px;margin-top:14px;color:#7a1f31}
+.empty{padding:34px 10px;text-align:center;color:var(--muted)}
+.loading{display:flex;gap:14px;align-items:center;padding:24px 4px;color:var(--muted);font-weight:500}
+.spin{width:26px;height:26px;border-radius:50%;border:4px solid var(--mint);border-top-color:var(--leaf);animation:spin 0.9s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.hidden{display:none!important}
+
+/* cooking mode */
+.cook{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.cook-top{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.cook-top h2{margin:0;font-size:1.15rem;flex:1;line-height:1.15}
+.x{border:0;background:var(--ink);color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.2rem}
+.tabs{display:flex;gap:4px;margin:0 16px;background:var(--mint);padding:4px;border-radius:12px}
+.tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px;font-weight:700;color:var(--muted)}
+.tabs button[aria-pressed="true"]{background:var(--paper);color:var(--ink)}
+.prog{height:6px;background:var(--mint);margin:14px 16px 0;border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--lemon);transition:width .25s}
+.cook-body{flex:1;overflow:auto;padding:18px 16px}
+.cook-inner{max-width:680px;margin:0 auto}
+.stepnum{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--lemon);font-family:var(--display);font-weight:800;font-size:1.2rem}
+.step-title{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,5vw,2.2rem);letter-spacing:-.02em;line-height:1.1;margin:12px 0}
+.step-text{font-size:1.2rem;line-height:1.6;max-width:56ch}
+.tip{background:#FFF6D6;border-left:5px solid var(--lemon);padding:10px 14px;border-radius:8px;margin-top:18px}
+.timer{margin-top:20px;display:flex;align-items:center;gap:14px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px}
+.timer .t{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:-.02em;min-width:5.2ch}
+.timer.done{border-color:var(--radish);background:#FBE4E8}
+.cook-nav{display:flex;gap:10px;padding:12px 16px 16px;border-top:1px solid var(--line);background:var(--paper)}
+.cook-nav .btn{flex:1;justify-content:center;padding:15px}
+.cl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cl label{display:flex;gap:12px;align-items:center;background:var(--paper);border:1px solid var(--line);padding:12px 14px;border-radius:12px;cursor:pointer}
+.cl input{width:22px;height:22px;accent-color:var(--leaf)}
+.cl .amt{color:var(--muted);margin-left:auto;text-align:right}
+.cl .need{color:var(--radish);font-size:.85rem;font-weight:700}
+.cl input:checked + span{text-decoration:line-through;color:var(--muted)}
+.finish{text-align:center;padding:30px 0}
+.finish .big-emo{font-size:4rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><span>🍳</span>PantryChef</div>
+    <nav aria-label="Sections">
+      <button id="tabCook" aria-pressed="true">Cook</button>
+      <button id="tabSaved" aria-pressed="false">Saved <span id="savedCount"></span></button>
+    </nav>
+  </header>
+
+  <main id="viewCook">
+    <h1>What’s in your kitchen?</h1>
+    <p class="lead">Add photos of your fridge, shelf or groceries. You’ll get dishes you can cook now, with every step.</p>
+
+    <label class="drop" id="drop" for="fileInput">
+      <strong>Paste, drop or choose photos</strong>
+      <p>Press Ctrl+V (⌘+V on Mac) anywhere on this page to paste a screenshot or copied image.</p>
+      <div class="drop-actions">
+        <button type="button" class="btn" id="btnChoose">Choose photos</button>
+        <button type="button" class="btn ghost" id="btnCamera">Take a photo</button>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </label>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+
+    <div class="panel">
+      <label class="field" for="notes">Anything else you have, or want to avoid?</label>
+      <textarea id="notes" placeholder="e.g. rice, eggs, curry leaves. No mushrooms please."></textarea>
+
+      <div class="row">
+        <div>
+          <label class="field">Servings</label>
+          <div class="stepper">
+            <button type="button" id="minus" aria-label="Fewer servings">−</button>
+            <output id="servings">2</output>
+            <button type="button" id="plus" aria-label="More servings">+</button>
+          </div>
+        </div>
+        <div>
+          <label class="field" for="maxTime">Time available</label>
+          <select id="maxTime">
+            <option value="0">Any</option><option value="15">Up to 15 min</option>
+            <option value="30">Up to 30 min</option><option value="45">Up to 45 min</option>
+            <option value="60">Up to 1 hour</option>
+          </select>
+        </div>
+        <div>
+          <label class="field" for="cuisine">Cuisine</label>
+          <select id="cuisine">
+            <option value="any">Surprise me</option><option>Indian</option><option>South Indian</option>
+            <option>Arabic / Middle Eastern</option><option>Italian</option><option>Asian</option>
+            <option>Mexican</option><option>Continental</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="field" style="margin-top:16px">Diet</label>
+      <div class="chips" id="diet"></div>
+    </div>
+
+    <button class="btn lemon big" id="go">Find dishes</button>
+    <div id="msg"></div>
+
+    <section id="results" class="hidden">
+      <h2>What I can see</h2>
+      <div class="panel" style="margin-top:0">
+        <div class="found" id="found"></div>
+        <form class="add-ing" id="addForm">
+          <input id="addInput" placeholder="Add or fix an ingredient" aria-label="Add an ingredient">
+          <button class="btn ghost" type="submit">Add</button>
+        </form>
+        <button class="btn" id="refresh" style="margin-top:12px">Update dishes</button>
+      </div>
+      <h2>Dishes you can make</h2>
+      <div class="dishes" id="dishes"></div>
+    </section>
+  </main>
+
+  <main id="viewSaved" class="hidden">
+    <h1>Saved recipes</h1>
+    <p class="lead">Recipes you saved open instantly, even without a new search.</p>
+    <div class="dishes" id="savedList"></div>
+  </main>
+</div>
+
+<div class="cook hidden" id="cook" role="dialog" aria-modal="true" aria-label="Cooking mode"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const state = {
+  images: [],            // base64 jpeg (no prefix) + preview url
+  ingredients: [],       // confirmed list of names
+  dishes: [],
+  diet: new Set(store.get('pc_diet', [])),
+  servings: store.get('pc_servings', 2),
+  saved: store.get('pc_saved', []),
+  pw: store.get('pc_pw', ''),
+  cook: null,
+};
+const DIETS = ['Vegetarian','Vegan','Eggless','Gluten-free','Dairy-free','Halal','High-protein'];
+
+/* ---------- API ---------- */
+async function api(path, body) {
+  const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-app-password': state.pw }, body: JSON.stringify(body) });
+  if (res.status === 401) {
+    const p = prompt('Enter the app password');
+    if (!p) throw new Error('A password is needed to use this app.');
+    state.pw = p; store.set('pc_pw', p);
+    return api(path, body);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data.error || 'Something went wrong. Please try again.') + (data.detail ? '\n' + data.detail : ''));
+  return data;
+}
+
+/* ---------- Photos ---------- */
+function resizeToJpeg(file, max = 1280) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const dataUrl = c.toDataURL('image/jpeg', 0.82);
+      URL.revokeObjectURL(url);
+      resolve({ data: dataUrl.split(',')[1], preview: dataUrl });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('That file could not be read as an image.')); };
+    img.src = url;
+  });
+}
+async function addFiles(files) {
+  const list = [...files].filter((f) => f.type.startsWith('image/'));
+  if (!list.length) return;
+  for (const f of list) {
+    if (state.images.length >= 6) { showMsg('You can add up to 6 photos at a time.', 'notice'); break; }
+    try { state.images.push(await resizeToJpeg(f)); } catch (e) { showMsg(e.message, 'error'); }
+  }
+  renderThumbs();
+}
+function renderThumbs() {
+  $('#thumbs').innerHTML = state.images.map((im, i) =>
+    `<div class="thumb"><img src="${im.preview}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button></div>`).join('');
+}
+$('#thumbs').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-rm]'); if (!b) return;
+  e.preventDefault(); state.images.splice(+b.dataset.rm, 1); renderThumbs();
+});
+$('#btnChoose').addEventListener('click', (e) => { e.preventDefault(); $('#fileInput').click(); });
+$('#btnCamera').addEventListener('click', (e) => { e.preventDefault(); $('#cameraInput').click(); });
+$('#fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+$('#cameraInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+document.addEventListener('paste', (e) => {
+  const files = [...(e.clipboardData?.items || [])].filter((i) => i.kind === 'file').map((i) => i.getAsFile()).filter(Boolean);
+  if (files.length) { e.preventDefault(); addFiles(files); }
+});
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
+
+/* ---------- Options ---------- */
+function renderDiet() {
+  $('#diet').innerHTML = DIETS.map((d) => `<button type="button" class="chip" aria-pressed="${state.diet.has(d)}" data-d="${d}">${d}</button>`).join('');
+}
+$('#diet').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-d]'); if (!b) return;
+  state.diet.has(b.dataset.d) ? state.diet.delete(b.dataset.d) : state.diet.add(b.dataset.d);
+  store.set('pc_diet', [...state.diet]); renderDiet();
+});
+function renderServings() { $('#servings').textContent = state.servings; store.set('pc_servings', state.servings); }
+$('#minus').addEventListener('click', () => { state.servings = Math.max(1, state.servings - 1); renderServings(); });
+$('#plus').addEventListener('click', () => { state.servings = Math.min(12, state.servings + 1); renderServings(); });
+
+function showMsg(text, kind = 'error') { $('#msg').innerHTML = text ? `<div class="${kind}" role="alert">${esc(text)}</div>` : ''; }
+function showLoading(text) { $('#msg').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(text)}</div></div>`; }
+
+/* ---------- Suggest ---------- */
+function payload(useImages) {
+  return {
+    images: useImages ? state.images.map((i) => i.data) : [],
+    ingredients: useImages ? [] : state.ingredients,
+    notes: $('#notes').value, diet: [...state.diet], cuisine: $('#cuisine').value,
+    servings: state.servings, maxTime: +$('#maxTime').value,
+  };
+}
+async function suggest(useImages) {
+  const btns = [$('#go'), $('#refresh')]; btns.forEach((b) => (b.disabled = true));
+  showLoading(useImages && state.images.length ? 'Looking at your photos and picking dishes…' : 'Picking dishes…');
+  try {
+    const out = await api('/api/suggest', payload(useImages));
+    state.ingredients = (out.ingredients || []).map((i) => i.name).filter(Boolean);
+    if (!useImages) state.ingredients = state.ingredients.length ? state.ingredients : [];
+    state.dishes = out.dishes || [];
+    showMsg(out.note || '', 'notice');
+    renderResults();
+  } catch (e) { showMsg(e.message, 'error'); }
+  finally { btns.forEach((b) => (b.disabled = false)); }
+}
+$('#go').addEventListener('click', () => suggest(true));
+$('#refresh').addEventListener('click', () => suggest(false));
+
+function renderResults() {
+  const has = state.ingredients.length || state.dishes.length;
+  $('#results').classList.toggle('hidden', !has);
+  $('#found').innerHTML = state.ingredients.length
+    ? state.ingredients.map((n, i) => `<span class="ing">${esc(n)}<button type="button" data-ri="${i}" aria-label="Remove ${esc(n)}">×</button></span>`).join('')
+    : '<span style="color:var(--muted)">Nothing detected yet. Add ingredients below.</span>';
+  $('#dishes').innerHTML = state.dishes.length ? state.dishes.map((d, i) => dishCard(d, i)).join('')
+    : '<div class="empty">No dishes yet. Add ingredients and tap Update dishes.</div>';
+  if (has) $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function dishCard(d, i) {
+  const miss = (d.missing || []).length ? `<div class="miss"><b>You’d need:</b> ${esc(d.missing.join(', '))}</div>` : `<div class="miss">You have everything.</div>`;
+  const pct = Math.max(0, Math.min(100, +d.match_percent || 0));
+  return `<article class="dish">
+    <div class="emo" aria-hidden="true">${esc(d.emoji || '🍽️')}</div>
+    <h3>${esc(d.name)}</h3>
+    <div class="meta">${esc(d.cuisine || '')} • ${esc(d.time_minutes || '?')} min • ${esc(d.difficulty || '')}</div>
+    <p class="desc">${esc(d.description || '')}</p>
+    <div class="match"><div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="matchtxt"><span>Uses ${esc((d.uses || []).slice(0, 5).join(', '))}</span><span>${pct}% match</span></div></div>
+    ${miss}
+    <div class="dish-actions"><button class="btn" data-cook="${i}">Start cooking</button></div>
+  </article>`;
+}
+$('#found').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ri]'); if (!b) return;
+  state.ingredients.splice(+b.dataset.ri, 1); renderResults();
+});
+$('#addForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = $('#addInput').value.trim(); if (!v) return;
+  v.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => state.ingredients.push(s));
+  $('#addInput').value = ''; renderResults();
+});
+$('#dishes').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-cook]'); if (!b) return;
+  const d = state.dishes[+b.dataset.cook];
+  b.disabled = true; b.textContent = 'Writing the recipe…';
+  try {
+    const r = await api('/api/recipe', { dish: d.name, ingredients: state.ingredients, diet: [...state.diet], servings: state.servings });
+    openCook(r);
+  } catch (err) { showMsg(err.message, 'error'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  finally { b.disabled = false; b.textContent = 'Start cooking'; }
+});
+
+/* ---------- Saved ---------- */
+const isSaved = (r) => state.saved.some((s) => s.name === r.name);
+function toggleSave(r) {
+  if (isSaved(r)) state.saved = state.saved.filter((s) => s.name !== r.name);
+  else state.saved.unshift(r);
+  store.set('pc_saved', state.saved); renderSaved();
+}
+function renderSaved() {
+  $('#savedCount').textContent = state.saved.length ? `(${state.saved.length})` : '';
+  $('#savedList').innerHTML = state.saved.length ? state.saved.map((r, i) => `<article class="dish">
+    <div class="emo" aria-hidden="true">${esc(r.emoji || '🍽️')}</div><h3>${esc(r.name)}</h3>
+    <div class="meta">${esc(r.total_time_minutes || '?')} min • ${esc(r.difficulty || '')} • serves ${esc(r.servings || '')}</div>
+    <div class="dish-actions"><button class="btn" data-open="${i}">Cook</button><button class="btn ghost" data-del="${i}">Remove</button></div></article>`).join('')
+    : '<div class="empty">Nothing saved yet. Open a recipe and tap Save.</div>';
+}
+$('#savedList').addEventListener('click', (e) => {
+  const o = e.target.closest('[data-open]'), d = e.target.closest('[data-del]');
+  if (o) openCook(state.saved[+o.dataset.open]);
+  if (d) { state.saved.splice(+d.dataset.del, 1); store.set('pc_saved', state.saved); renderSaved(); }
+});
+function setView(v) {
+  $('#viewCook').classList.toggle('hidden', v !== 'cook'); $('#viewSaved').classList.toggle('hidden', v !== 'saved');
+  $('#tabCook').setAttribute('aria-pressed', v === 'cook'); $('#tabSaved').setAttribute('aria-pressed', v === 'saved');
+}
+$('#tabCook').addEventListener('click', () => setView('cook'));
+$('#tabSaved').addEventListener('click', () => setView('saved'));
+
+/* ---------- Cooking mode ---------- */
+let wake = null, tick = null;
+async function keepAwake() { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
+function openCook(recipe) {
+  state.cook = { r: recipe, i: 0, tab: 'steps', checked: new Set(), timer: null };
+  $('#cook').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  keepAwake(); renderCook();
+}
+function closeCook() {
+  clearInterval(tick); tick = null; state.cook = null;
+  $('#cook').classList.add('hidden'); document.body.style.overflow = ''; try { wake?.release(); } catch {}
+  renderSaved();
+}
+function renderCook() {
+  const c = state.cook; if (!c) return;
+  const r = c.r, steps = r.steps || [], last = c.i >= steps.length;
+  const pct = steps.length ? Math.round((Math.min(c.i, steps.length) / steps.length) * 100) : 0;
+  let body = '';
+  if (c.tab === 'ing') {
+    body = `<ul class="cl">${(r.ingredients || []).map((g, k) => `<li><label><input type="checkbox" data-k="${k}" ${c.checked.has(k) ? 'checked' : ''}><span>${esc(g.item)}</span>
+      <span class="amt">${esc(g.amount)}${g.have === false ? '<br><span class="need">need to buy</span>' : ''}</span></label></li>`).join('')}</ul>
+      ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
+  } else if (last) {
+    body = `<div class="finish"><div class="big-emo">${esc(r.emoji || '🍽️')}</div><h2 class="step-title">Ready to eat!</h2>
+      <p class="step-text" style="margin:0 auto">${esc(r.name)} is done. Enjoy your meal.</p></div>
+      ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
+  } else {
+    const s = steps[c.i];
+    body = `<span class="stepnum">${c.i + 1}</span><h2 class="step-title">${esc(s.title)}</h2><p class="step-text">${esc(s.instruction)}</p>
+      ${s.tip ? `<div class="tip">${esc(s.tip)}</div>` : ''}
+      ${s.timer_minutes ? timerBox(s.timer_minutes) : ''}`;
+  }
+  $('#cook').innerHTML = `
+    <div class="cook-top"><button class="x" id="cx" aria-label="Close cooking mode">×</button>
+      <h2>${esc(r.name)}</h2>
+      <button class="btn ${isSaved(r) ? '' : 'ghost'}" id="csave">${isSaved(r) ? 'Saved ✓' : 'Save'}</button></div>
+    <div class="tabs"><button data-t="steps" aria-pressed="${c.tab === 'steps'}">Steps</button><button data-t="ing" aria-pressed="${c.tab === 'ing'}">Ingredients (${(r.ingredients || []).length})</button></div>
+    <div class="prog"><i style="width:${pct}%"></i></div>
+    <div class="cook-body"><div class="cook-inner">${body}</div></div>
+    ${c.tab === 'steps' ? `<div class="cook-nav"><button class="btn ghost" id="cprev" ${c.i === 0 ? 'disabled' : ''}>Back</button>
+      <button class="btn lemon" id="cnext">${last ? 'Close' : c.i === steps.length - 1 ? 'Finish' : 'Next step'}</button></div>` : ''}`;
+}
+function timerBox(mins) {
+  const t = state.cook.timer;
+  const active = t && t.step === state.cook.i;
+  const secs = active ? t.left : mins * 60;
+  const done = active && t.left <= 0;
+  return `<div class="timer ${done ? 'done' : ''}" id="timerBox"><div class="t" id="tv">${fmt(secs)}</div>
+    <button class="btn" id="tbtn">${done ? 'Stop' : active && t.running ? 'Pause' : active ? 'Resume' : 'Start timer'}</button>
+    ${active ? '<button class="btn ghost" id="treset">Reset</button>' : ''}</div>`;
+}
+const fmt = (s) => { s = Math.max(0, s); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+function beep() {
+  try {
+    const a = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.35, 0.7].forEach((d) => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
+      o.frequency.value = 880; g.gain.value = 0.2; o.start(a.currentTime + d); o.stop(a.currentTime + d + 0.2); });
+  } catch {}
+  navigator.vibrate?.([300, 150, 300]);
+}
+function startTimer() {
+  const c = state.cook, mins = c.r.steps[c.i].timer_minutes;
+  if (!c.timer || c.timer.step !== c.i) c.timer = { step: c.i, left: mins * 60, running: false };
+  const t = c.timer;
+  if (t.left <= 0) { clearInterval(tick); t.running = false; c.timer = null; return renderCook(); }
+  if (t.running) { t.running = false; clearInterval(tick); }
+  else {
+    t.running = true; clearInterval(tick);
+    tick = setInterval(() => {
+      t.left -= 1;
+      const tv = $('#tv');
+      if (t.left <= 0) { clearInterval(tick); t.running = false; beep(); if (state.cook && state.cook.i === t.step) renderCook(); }
+      else if (tv && state.cook && state.cook.i === t.step) tv.textContent = fmt(t.left);
+    }, 1000);
+  }
+  renderCook();
+}
+$('#cook').addEventListener('click', (e) => {
+  const c = state.cook; if (!c) return;
+  const id = e.target.closest('button')?.id;
+  const tab = e.target.closest('[data-t]');
+  if (id === 'cx') return closeCook();
+  if (id === 'csave') { toggleSave(c.r); return renderCook(); }
+  if (tab) { c.tab = tab.dataset.t; return renderCook(); }
+  if (id === 'cprev') { c.i = Math.max(0, c.i - 1); return renderCook(); }
+  if (id === 'cnext') { if (c.i >= c.r.steps.length) return closeCook(); c.i += 1; return renderCook(); }
+  if (id === 'tbtn') return startTimer();
+  if (id === 'treset') { clearInterval(tick); c.timer = null; return renderCook(); }
+});
+$('#cook').addEventListener('change', (e) => {
+  const k = e.target.dataset?.k; if (k === undefined || !state.cook) return;
+  e.target.checked ? state.cook.checked.add(+k) : state.cook.checked.delete(+k);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.cook) closeCook(); });
+document.addEventListener('visibilitychange', () => { if (state.cook && document.visibilityState === 'visible') keepAwake(); });
+
+/* ---------- init ---------- */
+renderDiet(); renderServings(); renderSaved();
+</script>
+</body>
+</html>
