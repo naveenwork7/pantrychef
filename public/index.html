@@ -1,223 +1,374 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2E6B47">
+<meta name="theme-color" content="#120E0B" id="themeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>PantryChef – cook with what you have</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EEF3EA; --paper:#fff; --ink:#12261B; --muted:#5B6F61; --line:#CBD8C6;
-  --leaf:#2E6B47; --leaf-dark:#1F4D32; --lemon:#F5C83B; --radish:#D1435B; --mint:#DCEBD7;
+  --bg:#120E0B; --ink:#FBF4EA; --muted:#B7AB9D;
+  --glass:rgba(255,255,255,.07); --glass2:rgba(255,255,255,.13); --stroke:rgba(255,255,255,.13);
+  --sun:#FFB627; --sun2:#FF7A18; --chilli:#FF4D5E; --leaf:#5EE0A0; --on-sun:#2A1600;
+  --grad:linear-gradient(135deg,#FFC83D 0%,#FF8A1F 100%);
+  --shadow:0 24px 60px rgba(0,0,0,.5);
+  --blobo:.34; --tab:rgba(24,18,14,.72);
   --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
-  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Instrument Serif',Georgia,serif;
+  --body:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
-*{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+:root[data-theme="light"]{
+  --bg:#FFF5E6; --ink:#27180D; --muted:#7C6B5B;
+  --glass:rgba(255,255,255,.62); --glass2:rgba(255,255,255,.92); --stroke:rgba(39,24,13,.11);
+  --shadow:0 20px 44px rgba(150,85,20,.18); --blobo:.40; --tab:rgba(255,250,242,.8);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:80px;color-scheme:dark}
+html[data-theme="light"]{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;transition:background .3s}
 button,select,textarea,input{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
-.wrap{max-width:780px;margin:0 auto;padding:0 18px 80px}
+button{cursor:pointer;touch-action:manipulation;transition:transform .15s,background .2s,opacity .2s}
+button:active{transform:scale(.96)}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.hidden{display:none!important}
+.ico{flex:none;display:block}
+em{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:0}
+
+/* ambient background */
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.blob{position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(90px);opacity:var(--blobo);animation:drift 22s ease-in-out infinite alternate}
+.b1{background:#FF7A18;top:-22vmax;left:-14vmax}
+.b2{background:#FF3D6E;top:30vh;right:-26vmax;animation-delay:-8s}
+.b3{background:#27C281;bottom:-30vmax;left:10vw;animation-delay:-15s}
+@keyframes drift{to{transform:translate(8vmax,6vmax) scale(1.15)}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 200px}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--stroke)}
 
 /* header */
-header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
-.logo{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;display:flex;gap:8px;align-items:center}
-.logo span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--lemon);font-size:1.1rem}
-nav{display:flex;gap:4px;background:var(--mint);padding:4px;border-radius:999px}
-nav button{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:700;color:var(--muted)}
-nav button[aria-pressed="true"]{background:var(--ink);color:#fff}
+header{display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top,0px)) 0 6px}
+.logo{display:flex;gap:10px;align-items:center;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.02em}
+.logo b{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:var(--grad);color:var(--on-sun);box-shadow:0 8px 20px rgba(255,138,31,.45);transform:rotate(-6deg)}
+.logo em{font-size:1.5rem}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
 
-h1{font-family:var(--display);font-weight:800;font-size:clamp(2.1rem,6.5vw,3.3rem);line-height:1.02;letter-spacing:-.03em;margin:26px 0 10px;max-width:14ch}
-.lead{color:var(--muted);font-size:1.1rem;margin:0 0 24px;max-width:46ch}
-h2{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin:34px 0 12px}
+/* hero */
+.hero{position:relative;padding:22px 0 18px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.5rem,11vw,4.2rem);line-height:.98;letter-spacing:-.04em;margin:0 0 12px;max-width:11ch}
+h1 em{font-size:1.14em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.06em}
+.lead{color:var(--muted);font-size:1.05rem;margin:0;max-width:34ch}
+.stk{position:absolute;display:grid;place-items:center;border-radius:22px;font-size:2rem;width:62px;height:62px;animation:float 6s ease-in-out infinite}
+.s1{right:2%;top:14px;transform:rotate(10deg)}
+.s2{right:20%;top:100px;width:52px;height:52px;font-size:1.7rem;animation-delay:-2s}
+.s3{right:0;top:128px;width:56px;height:56px;animation-delay:-4s}
+@keyframes float{50%{translate:0 -10px}}
+@media (min-width:700px){.s1{right:10%}.s2{right:26%}.s3{right:4%;top:150px}}
 
-/* drop zone */
-.drop{display:block;border:2px dashed var(--leaf);border-radius:22px;background:var(--paper);padding:26px 18px;text-align:center;transition:background .15s,border-color .15s}
-.drop.over{background:var(--mint);border-style:solid}
-.drop strong{font-family:var(--display);font-size:1.25rem;display:block}
-.drop p{margin:4px 0 14px;color:var(--muted)}
-.drop-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{border:0;border-radius:12px;padding:11px 18px;font-weight:700;background:var(--ink);color:#fff;display:inline-flex;align-items:center;gap:8px}
-.btn.ghost{background:var(--mint);color:var(--ink)}
-.btn.lemon{background:var(--lemon);color:var(--ink)}
-.btn.big{width:100%;justify-content:center;padding:16px;font-size:1.1rem;border-radius:14px;margin-top:18px}
-.btn[disabled]{opacity:.55;cursor:not-allowed}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:16px}
-.thumb{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--mint);border:3px solid #fff;box-shadow:0 2px 0 var(--line)}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(18,38,27,.85);color:#fff;font-size:15px;line-height:1}
-
-/* options */
-.panel{background:var(--paper);border-radius:18px;padding:18px;margin-top:16px;border:1px solid var(--line)}
-label.field{display:block;font-weight:700;margin-bottom:6px}
-textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdf9;resize:vertical;min-height:70px}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
-select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fbfdf9}
+/* bento */
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-template-areas:"photos photos" "notes notes" "serv time" "cuis cuis" "diet diet"}
+@media (min-width:760px){.bento{grid-template-columns:repeat(4,1fr);grid-template-areas:"photos photos notes notes" "photos photos serv time" "cuis cuis diet diet"}}
+.tile{border-radius:26px;padding:16px;min-width:0}
+.t-photos{grid-area:photos;display:flex;flex-direction:column;border-style:dashed;border-width:2px;border-color:rgba(255,182,39,.55);transition:.2s}
+.t-photos.over{background:rgba(255,182,39,.18);border-style:solid}
+.t-photos h3{margin:0;font-family:var(--display);font-size:1.3rem;letter-spacing:-.02em}
+.t-photos p{margin:2px 0 14px;color:var(--muted);font-size:.93rem}
+@media (hover:none){.desk{display:none}}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto}
+.t-notes{grid-area:notes}.t-serv{grid-area:serv}.t-time{grid-area:time}.t-cuis{grid-area:cuis}.t-diet{grid-area:diet}
+.lab{display:flex;align-items:center;gap:7px;color:var(--muted);font-weight:700;font-size:.82rem;margin-bottom:8px}
+textarea{width:100%;border:0;background:transparent;resize:none;min-height:70px;font-size:16px;outline:none;color:var(--ink)}
+textarea::placeholder,input::placeholder{color:var(--muted);opacity:.8}
+.stepper{display:flex;align-items:center;justify-content:space-between}
+.stepper button{width:44px;height:44px;border-radius:14px;border:1px solid var(--stroke);background:var(--glass2);display:grid;place-items:center}
+.stepper output{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1}
+.sel{position:relative}
+.sel select{appearance:none;-webkit-appearance:none;width:100%;border:0;background:transparent;font-family:var(--display);font-weight:800;font-size:1.25rem;padding:2px 22px 2px 0;outline:none;color:var(--ink);text-overflow:ellipsis}
+.sel select option{color:#27180D;background:#fff}
+.sel::after{content:'';position:absolute;right:2px;top:50%;width:8px;height:8px;border-right:2.5px solid var(--muted);border-bottom:2.5px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--line);background:#fbfdf9;padding:7px 14px;border-radius:999px;font-weight:500}
-.chip[aria-pressed="true"]{background:var(--leaf);border-color:var(--leaf);color:#fff}
-.stepper{display:flex;align-items:center;gap:6px}
-.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fbfdf9;font-size:1.2rem;font-weight:700}
-.stepper output{min-width:36px;text-align:center;font-weight:700;font-size:1.1rem}
+.chip{border:1px solid var(--stroke);background:var(--glass2);padding:8px 14px;border-radius:999px;font-weight:600;font-size:.92rem}
+.chip[aria-pressed="true"]{background:var(--grad);color:var(--on-sun);border-color:transparent;box-shadow:0 6px 16px rgba(255,138,31,.35)}
 
-/* ingredients found */
-.found{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ing{display:inline-flex;gap:6px;align-items:center;background:var(--mint);padding:6px 6px 6px 13px;border-radius:999px;font-weight:500}
-.ing button{border:0;background:var(--paper);width:22px;height:22px;border-radius:50%;line-height:1;color:var(--muted)}
+.thumbs{display:flex;gap:10px;overflow-x:auto;margin:0 -4px 12px;padding:4px;scrollbar-width:none}
+.thumbs::-webkit-scrollbar{display:none}
+.thumbs:empty{display:none}
+.thumb{position:relative;flex:none;width:84px;height:84px;border-radius:20px;overflow:hidden;border:2px solid var(--stroke);animation:pop .35s both}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;display:grid;place-items:center;padding:0}
+
+.btn{border:0;border-radius:18px;padding:13px 18px;font-weight:800;background:var(--glass2);color:var(--ink);border:1px solid var(--stroke);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px}
+.btn.grad{background:var(--grad);color:var(--on-sun);border-color:transparent;box-shadow:0 10px 26px rgba(255,138,31,.4)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.55}
+
+/* dock + CTA */
+.dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;display:flex;gap:4px;padding:5px;border-radius:999px;background:var(--tab);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);border:1px solid var(--stroke);box-shadow:var(--shadow)}
+.dock button{border:0;background:none;display:flex;align-items:center;gap:8px;padding:12px 22px;border-radius:999px;font-weight:800;color:var(--muted)}
+.dock button[aria-pressed="true"]{background:var(--grad);color:var(--on-sun)}
+.cta{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:25;padding:0 16px;pointer-events:none}
+.cta .btn{pointer-events:auto;max-width:520px;margin:0 auto;display:flex;min-height:58px;font-size:1.08rem;border-radius:20px;overflow:hidden;position:relative}
+.cta .btn::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3.2s ease-in-out infinite}
+@keyframes shine{60%,100%{transform:translateX(120%)}}
+
+/* results */
+h2{font-family:var(--display);font-weight:800;font-size:1.6rem;letter-spacing:-.03em;margin:34px 0 14px}
+h2 em{font-size:1.15em}
+.found{display:flex;flex-wrap:wrap;gap:8px}
+.ing{display:inline-flex;gap:8px;align-items:center;padding:6px 6px 6px 12px;border-radius:999px;font-weight:600;font-size:.95rem;animation:pop .3s both}
+.ing button{border:0;background:var(--glass2);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--muted);padding:0}
 .add-ing{display:flex;gap:8px;margin-top:12px}
-.add-ing input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbfdf9;min-width:0}
-
-/* dishes */
-.dishes{display:grid;gap:14px}
-.dish{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;grid-template-columns:56px 1fr;gap:4px 14px}
-.dish .emo{grid-row:span 2;font-size:2.4rem;width:56px;height:56px;display:grid;place-items:center;background:var(--mint);border-radius:16px}
-.dish h3{margin:0;font-family:var(--display);font-size:1.25rem;letter-spacing:-.01em;line-height:1.2}
-.dish .meta{color:var(--muted);font-size:.92rem}
-.dish .desc{grid-column:1/-1;margin:8px 0 0}
-.match{grid-column:1/-1;margin-top:10px}
-.bar{height:8px;border-radius:99px;background:var(--mint);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--leaf);border-radius:99px}
-.matchtxt{display:flex;justify-content:space-between;font-size:.88rem;color:var(--muted);margin-top:5px}
-.miss{grid-column:1/-1;margin-top:8px;font-size:.92rem}
-.miss b{color:var(--radish)}
-.dish-actions{grid-column:1/-1;display:flex;gap:10px;margin-top:12px}
-.dish-actions .btn{flex:1;justify-content:center}
-.heart{flex:0 0 auto!important;width:48px;padding:0!important}
-
-.notice{background:#FFF6D6;border:1px solid var(--lemon);padding:12px 14px;border-radius:12px;margin-top:14px}
-.error{white-space:pre-wrap;word-break:break-word;font-size:.92rem;background:#FBE4E8;border:1px solid var(--radish);padding:12px 14px;border-radius:12px;margin-top:14px;color:#7a1f31}
+.add-ing input{flex:1;min-width:0;border:1px solid var(--stroke);background:var(--glass);border-radius:16px;padding:0 14px;min-height:50px;font-size:16px;outline:none}
+.dishes{display:grid;gap:16px}
+@media (min-width:760px){.dishes{grid-template-columns:1fr 1fr}}
+.dish{position:relative;border-radius:32px;overflow:hidden;min-height:440px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:var(--shadow);isolation:isolate;animation:up .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*90ms);background:#2a2018}
+.dish::after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,rgba(10,6,3,.94) 6%,rgba(10,6,3,.6) 44%,rgba(10,6,3,0) 78%)}
+.ph{background:linear-gradient(135deg,#4a2c15,#8d3f12) center/cover no-repeat;display:grid;place-items:center}
+.ph .fb{font-size:3.6rem;transition:opacity .3s}
+.ph.has .fb{opacity:0}
+.dish .dimg{position:absolute;inset:0;z-index:-2;padding-bottom:45%;transition:transform 1.2s}
+.dish:hover .dimg{transform:scale(1.04)}
+.dtop{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.gchips{display:flex;gap:6px;flex-wrap:wrap}
+.gchip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.17);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 11px;border-radius:999px;font-weight:700;font-size:.8rem}
+.mring{position:relative;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#FFC83D calc(var(--p)*1%),rgba(255,255,255,.22) 0);flex:none}
+.mring::after{content:'';position:absolute;inset:5px;border-radius:50%;background:rgba(15,9,5,.72);backdrop-filter:blur(6px)}
+.mring b{position:relative;z-index:1;color:#fff;font-size:.88rem}
+.mring b::after{content:'%';font-size:.6rem;opacity:.8}
+.dcontent{padding:20px 18px 18px;color:#fff;display:flex;flex-direction:column;gap:7px}
+.dcontent .cu{color:#FFC83D;font-weight:800;font-size:.8rem}
+.dcontent h3{margin:0;font-family:var(--display);font-weight:800;font-size:1.75rem;line-height:1.05;letter-spacing:-.03em}
+.dcontent p{margin:0;color:rgba(255,255,255,.82);font-size:.95rem}
+.uses{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.86rem;font-weight:600;margin:2px 0 6px}
+.uses .ok{color:#7CF0B5;display:inline-flex;gap:4px;align-items:center}
+.uses .no{color:#FF8A96}
+.rowbtn{display:flex;gap:8px}
+.rowbtn .btn.grad{flex:1}
+.rowbtn .sq{width:54px;padding:0;flex:none;background:rgba(255,255,255,.17);color:#fff;border-color:rgba(255,255,255,.2)}
+.notice{background:rgba(255,182,39,.15);border:1px solid rgba(255,182,39,.5);padding:12px 14px;border-radius:16px;margin-top:14px}
+.error{white-space:pre-wrap;word-break:break-word;font-size:.9rem;background:rgba(255,77,94,.14);border:1px solid rgba(255,77,94,.55);padding:12px 14px;border-radius:16px;margin-top:14px}
 .empty{padding:34px 10px;text-align:center;color:var(--muted)}
-.loading{display:flex;gap:14px;align-items:center;padding:24px 4px;color:var(--muted);font-weight:500}
-.spin{width:26px;height:26px;border-radius:50%;border:4px solid var(--mint);border-top-color:var(--leaf);animation:spin 0.9s linear infinite;flex:none}
+.loading{display:flex;gap:14px;align-items:center;padding:22px 4px;color:var(--muted);font-weight:600}
+.spin{width:26px;height:26px;border-radius:50%;border:4px solid var(--glass2);border-top-color:var(--sun);animation:spin .9s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
-.hidden{display:none!important}
+.skgrid{display:grid;gap:16px}
+@media (min-width:760px){.skgrid{grid-template-columns:1fr 1fr}}
+.sk{border-radius:32px;height:300px;background:linear-gradient(100deg,var(--glass) 30%,var(--glass2) 50%,var(--glass) 70%) 0 0/200% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+@keyframes up{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translate(-50%,-30px);z-index:90;padding:12px 18px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.3s cubic-bezier(.2,.8,.2,1);max-width:92vw;text-align:center;background:var(--tab);backdrop-filter:blur(20px);border:1px solid var(--stroke);box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{position:fixed;inset:0;z-index:70;display:grid;place-content:center;justify-items:center;gap:14px;padding:24px;text-align:center;background:rgba(10,6,3,.72);backdrop-filter:blur(14px)}
+.overlay .card{padding:28px 30px;border-radius:30px;display:grid;gap:10px;justify-items:center}
+.overlay .big{font-size:3.4rem;animation:bob 1.2s ease-in-out infinite}
+.overlay p{margin:0;font-family:var(--display);font-weight:800;font-size:1.25rem;max-width:18ch}
 
 /* cooking mode */
-.cook{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
-.cook-top{display:flex;align-items:center;gap:12px;padding:12px 16px}
-.cook-top h2{margin:0;font-size:1.15rem;flex:1;line-height:1.15}
-.x{border:0;background:var(--ink);color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.2rem}
-.tabs{display:flex;gap:4px;margin:0 16px;background:var(--mint);padding:4px;border-radius:12px}
-.tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px;font-weight:700;color:var(--muted)}
-.tabs button[aria-pressed="true"]{background:var(--paper);color:var(--ink)}
-.prog{height:6px;background:var(--mint);margin:14px 16px 0;border-radius:99px;overflow:hidden}
-.prog i{display:block;height:100%;background:var(--lemon);transition:width .25s}
-.cook-body{flex:1;overflow:auto;padding:18px 16px}
-.cook-inner{max-width:680px;margin:0 auto}
-.stepnum{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--lemon);font-family:var(--display);font-weight:800;font-size:1.2rem}
-.step-title{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,5vw,2.2rem);letter-spacing:-.02em;line-height:1.1;margin:12px 0}
-.step-text{font-size:1.2rem;line-height:1.6;max-width:56ch}
-.tip{background:#FFF6D6;border-left:5px solid var(--lemon);padding:10px 14px;border-radius:8px;margin-top:18px}
-.timer{margin-top:20px;display:flex;align-items:center;gap:14px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px}
-.timer .t{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:-.02em;min-width:5.2ch}
-.timer.done{border-color:var(--radish);background:#FBE4E8}
-.cook-nav{display:flex;gap:10px;padding:12px 16px 16px;border-top:1px solid var(--line);background:var(--paper)}
-.cook-nav .btn{flex:1;justify-content:center;padding:15px}
-.cl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.cl label{display:flex;gap:12px;align-items:center;background:var(--paper);border:1px solid var(--line);padding:12px 14px;border-radius:12px;cursor:pointer}
-.cl input{width:22px;height:22px;accent-color:var(--leaf)}
-.cl .amt{color:var(--muted);margin-left:auto;text-align:right}
-.cl .need{color:var(--radish);font-size:.85rem;font-weight:700}
-.cl input:checked + span{text-decoration:line-through;color:var(--muted)}
-.finish{text-align:center;padding:30px 0}
-.finish .big-emo{font-size:4rem}
+.cook{position:fixed;inset:0;z-index:50;background:var(--bg);transform:translateY(100%);transition:transform .38s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+.cook.show{transform:none}
+.cbg{position:absolute;inset:-40px;background:linear-gradient(135deg,#4a2c15,#8d3f12) center/cover no-repeat;filter:blur(46px) saturate(1.5);opacity:.5;transform:scale(1.2)}
+.cview{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.ctop{display:flex;align-items:center;gap:8px;padding:10px 12px 8px}
+.ctitle{flex:1;min-width:0;padding:0 4px}
+.ctitle b{display:block;font-family:var(--display);font-weight:800;font-size:1.05rem;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctitle small{color:var(--muted);font-weight:600}
+.ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;color:var(--ink)}
+.ib.on{background:var(--grad);color:var(--on-sun);border-color:transparent}
+.segs{display:flex;gap:5px;padding:2px 16px 10px}
+.seg{flex:1;height:5px;border:0;padding:0;border-radius:99px;background:var(--glass2);overflow:hidden;position:relative}
+.seg.done{background:var(--leaf)}
+.seg.now{background:var(--grad)}
+.pills{display:flex;gap:8px;padding:0 14px;overflow-x:auto;scrollbar-width:none}
+.pills:empty{display:none}
+.pill{flex:none;border:0;background:var(--grad);color:var(--on-sun);border-radius:999px;padding:8px 14px;font-weight:800;font-size:.88rem;margin-bottom:8px;display:flex;gap:6px;align-items:center}
+.pill.done{background:var(--chilli);color:#fff;animation:bob .6s ease-in-out infinite}
+.cbody{flex:1;overflow-y:auto;padding:6px 16px 130px;overscroll-behavior:contain;view-transition-name:step}
+.cinner{max-width:620px;margin:0 auto}
+.cnav{position:absolute;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;padding:8px;border-radius:30px;background:var(--tab);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid var(--stroke);box-shadow:var(--shadow);max-width:620px;margin:0 auto}
+.cnav .btn{min-height:56px;font-size:1.05rem;border-radius:22px}
+.cnav .back{width:56px;padding:0;flex:none}
+.cnav .btn.grad{flex:1}
+
+html[data-dir="next"]::view-transition-old(step){animation:.3s cubic-bezier(.4,0,.2,1) both outL}
+html[data-dir="next"]::view-transition-new(step){animation:.34s cubic-bezier(.2,.8,.2,1) both inR}
+html[data-dir="prev"]::view-transition-old(step){animation:.3s cubic-bezier(.4,0,.2,1) both outR}
+html[data-dir="prev"]::view-transition-new(step){animation:.34s cubic-bezier(.2,.8,.2,1) both inL}
+@keyframes outL{to{transform:translateX(-60px);opacity:0}}
+@keyframes inR{from{transform:translateX(60px);opacity:0}}
+@keyframes outR{to{transform:translateX(60px);opacity:0}}
+@keyframes inL{from{transform:translateX(-60px);opacity:0}}
+
+.stage{position:relative;border-radius:34px;padding:34px 16px;min-height:210px;display:grid;place-items:center;overflow:hidden}
+.stage::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,var(--vc) 0,transparent 62%);opacity:.5}
+.bignum{position:absolute;left:16px;top:0;font-family:var(--display);font-weight:800;font-size:5.6rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--stroke)}
+.vemo{font-size:5rem;line-height:1;display:inline-block;position:relative;z-index:1;filter:drop-shadow(0 12px 18px rgba(0,0,0,.35))}
+.flame{position:absolute;top:14px;right:14px;z-index:2;display:flex;align-items:center;gap:3px;padding:6px 12px 6px 10px;border-radius:999px;font-size:.8rem;font-weight:800}
+.fl{width:17px;height:17px;color:#FF8A1F;opacity:.28}
+.fl.on{opacity:1;fill:currentColor;filter:drop-shadow(0 0 6px #FF7A18);animation:flick 1s ease-in-out infinite alternate}
+.fl.on:nth-of-type(2){animation-delay:.2s}.fl.on:nth-of-type(3){animation-delay:.4s}
+@keyframes flick{to{transform:scale(1.14) rotate(-4deg)}}
+.puff{position:absolute;bottom:26px;left:46%;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.55);opacity:0;animation:rise 2.4s ease-in infinite;z-index:0}
+.puff:nth-of-type(2){left:36%;animation-delay:.6s}.puff:nth-of-type(3){left:58%;animation-delay:1.2s}.puff:nth-of-type(4){left:50%;animation-delay:1.8s}
+@keyframes rise{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:.8}100%{transform:translateY(-120px) scale(1.6);opacity:0}}
+@keyframes bob{50%{transform:translateY(-9px)}}
+@keyframes chop{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(22deg) translateY(6px)}}
+@keyframes stir{0%{transform:rotate(-14deg) translateX(-9px)}50%{transform:rotate(14deg) translateX(9px)}100%{transform:rotate(-14deg) translateX(-9px)}}
+@keyframes sizzle{0%,100%{transform:translate(0)}20%{transform:translate(-3px,2px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,-2px)}80%{transform:translate(2px,2px)}}
+@keyframes spin2{to{transform:rotate(360deg)}}
+@keyframes popbig{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.a-bob .vemo{animation:bob 1.8s ease-in-out infinite}
+.a-chop .vemo{animation:chop .7s ease-in-out infinite;transform-origin:70% 90%}
+.a-stir .vemo{animation:stir 1.2s ease-in-out infinite}
+.a-sizzle .vemo{animation:sizzle .5s linear infinite}
+.a-spin .vemo{animation:spin2 1.6s linear infinite}
+.a-popbig .vemo{animation:popbig .6s ease-out both}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+.stitle{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,7.5vw,2.6rem);letter-spacing:-.035em;line-height:1.03;margin:20px 0 10px}
+.stext{font-size:1.2rem;line-height:1.6;margin:0}
+.lbl{font-weight:800;margin:24px 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lbl small{color:var(--muted);font-weight:600}
+.ichips{display:grid;gap:9px}
+.ichip{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border-radius:22px;padding:8px 14px 8px 8px;transition:.2s}
+.ichip .itxt{display:flex;flex-direction:column;min-width:0}
+.ichip .itxt b{font-weight:700}
+.ichip .itxt small{color:var(--muted)}
+.ithumb{width:54px;height:54px;border-radius:16px;background:var(--glass2) center/cover no-repeat;display:grid;place-items:center;font-size:1.6rem;flex:none}
+.ithumb.has .fb{display:none}
+.tick{margin-left:auto;width:32px;height:32px;border-radius:50%;border:2px solid var(--stroke);display:grid;place-items:center;color:transparent;flex:none;transition:.25s}
+.ichip.on{background:rgba(94,224,160,.13);border-color:rgba(94,224,160,.6)}
+.ichip.on .tick{background:var(--leaf);border-color:var(--leaf);color:#06281a;transform:scale(1.08)}
+.ichip.on .itxt b{opacity:.65}
+.ichip .need{color:#FF8A96;font-size:.78rem;font-weight:800}
+.cue{margin-top:18px;border-radius:20px;padding:14px 16px;border-left:5px solid var(--leaf)}
+.tip{margin-top:12px;background:rgba(255,182,39,.15);border-left:5px solid var(--sun);padding:13px 16px;border-radius:20px}
+.timer{position:relative;width:176px;margin:26px auto 12px}
+.ring{width:176px;height:176px;transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:9}
+.ring .bgc{stroke:var(--glass2)}
+.ring .fg{stroke:url(#tg);stroke-linecap:round;transition:stroke-dashoffset 1s linear;filter:drop-shadow(0 0 8px rgba(255,138,31,.55))}
+.timer.done .fg{stroke:var(--chilli)}
+.timer.done{animation:bob .6s ease-in-out infinite}
+.tmid{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.tmid .t{font-family:var(--display);font-weight:800;font-size:2.4rem;letter-spacing:-.03em;line-height:1}
+.tmid small{color:var(--muted);font-weight:700}
+.tbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+.hero2{border-radius:34px;aspect-ratio:16/11;overflow:hidden;position:relative;box-shadow:var(--shadow)}
+.hero2 .fb{font-size:5rem}
+.hero2::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,6,3,.5),transparent 50%)}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 6px}
+.meta span{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 14px;font-weight:700;font-size:.9rem}
+.finish{text-align:center}
+.finish .stext{color:var(--muted)}
+.tipsbox{text-align:left}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:95}
+.confetti span{position:absolute;top:-30px;font-size:1.7rem;animation:fall 3.4s linear forwards}
+@keyframes fall{to{transform:translateY(112vh) rotate(420deg)}}
 </style>
 </head>
 <body>
+<div class="bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
+<div class="grain" aria-hidden="true"></div>
+
 <div class="wrap">
   <header>
-    <div class="logo"><span>🍳</span>PantryChef</div>
-    <nav aria-label="Sections">
-      <button id="tabCook" aria-pressed="true">Cook</button>
-      <button id="tabSaved" aria-pressed="false">Saved <span id="savedCount"></span></button>
-    </nav>
+    <div class="logo"><b data-ico="chef" data-s="22"></b><span>Pantry<em>Chef</em></span></div>
+    <button class="iconbtn glass" id="themeBtn" aria-label="Switch light or dark theme"></button>
   </header>
 
   <main id="viewCook">
-    <h1>What’s in your kitchen?</h1>
-    <p class="lead">Add photos of your fridge, shelf or groceries. You’ll get dishes you can cook now, with every step.</p>
+    <section class="hero">
+      <span class="stk glass s1" aria-hidden="true">🧅</span><span class="stk glass s2" aria-hidden="true">🌶️</span><span class="stk glass s3" aria-hidden="true">🍅</span>
+      <h1>What’s in your <em>kitchen?</em></h1>
+      <p class="lead">Click photos of what you have. Get dishes you can cook right now, with easy step-by-step help.</p>
+    </section>
 
-    <label class="drop" id="drop" for="fileInput">
-      <strong>Paste, drop or choose photos</strong>
-      <p>Press Ctrl+V (⌘+V on Mac) anywhere on this page to paste a screenshot or copied image.</p>
-      <div class="drop-actions">
-        <button type="button" class="btn" id="btnChoose">Choose photos</button>
-        <button type="button" class="btn ghost" id="btnCamera">Take a photo</button>
+    <div class="bento">
+      <label class="tile glass t-photos" id="drop" for="fileInput">
+        <h3>Add photos</h3>
+        <p><span class="desk">Paste with Ctrl+V, drag and drop, or </span>fridge, shelf, groceries, anything.</p>
+        <div class="thumbs" id="thumbs"></div>
+        <div class="pick">
+          <button type="button" class="btn grad" id="btnCamera"><span data-ico="camera"></span>Camera</button>
+          <button type="button" class="btn" id="btnChoose"><span data-ico="image"></span>Gallery</button>
+        </div>
+      </label>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+
+      <div class="tile glass t-notes">
+        <label class="lab" for="notes"><span data-ico="pen" data-s="15"></span>Anything else at home? Or to avoid?</label>
+        <textarea id="notes" placeholder="e.g. rice, eggs, curry leaves. No mushrooms please."></textarea>
       </div>
-      <div class="thumbs" id="thumbs"></div>
-    </label>
-    <input type="file" id="fileInput" accept="image/*" multiple hidden>
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
-
-    <div class="panel">
-      <label class="field" for="notes">Anything else you have, or want to avoid?</label>
-      <textarea id="notes" placeholder="e.g. rice, eggs, curry leaves. No mushrooms please."></textarea>
-
-      <div class="row">
-        <div>
-          <label class="field">Servings</label>
-          <div class="stepper">
-            <button type="button" id="minus" aria-label="Fewer servings">−</button>
-            <output id="servings">2</output>
-            <button type="button" id="plus" aria-label="More servings">+</button>
-          </div>
-        </div>
-        <div>
-          <label class="field" for="maxTime">Time available</label>
-          <select id="maxTime">
-            <option value="0">Any</option><option value="15">Up to 15 min</option>
-            <option value="30">Up to 30 min</option><option value="45">Up to 45 min</option>
-            <option value="60">Up to 1 hour</option>
-          </select>
-        </div>
-        <div>
-          <label class="field" for="cuisine">Cuisine</label>
-          <select id="cuisine">
-            <option value="any">Surprise me</option><option>Indian</option><option>South Indian</option>
-            <option>Arabic / Middle Eastern</option><option>Italian</option><option>Asian</option>
-            <option>Mexican</option><option>Continental</option>
-          </select>
+      <div class="tile glass t-serv">
+        <div class="lab"><span data-ico="users" data-s="15"></span>Servings</div>
+        <div class="stepper">
+          <button type="button" id="minus" aria-label="Fewer servings"><span data-ico="minus" data-s="18"></span></button>
+          <output id="servings">2</output>
+          <button type="button" id="plus" aria-label="More servings"><span data-ico="plus" data-s="18"></span></button>
         </div>
       </div>
-
-      <label class="field" style="margin-top:16px">Diet</label>
-      <div class="chips" id="diet"></div>
+      <div class="tile glass t-time">
+        <label class="lab" for="maxTime"><span data-ico="clock" data-s="15"></span>Time you have</label>
+        <div class="sel"><select id="maxTime">
+          <option value="0">Any</option><option value="15">15 min</option><option value="30">30 min</option>
+          <option value="45">45 min</option><option value="60">1 hour</option></select></div>
+      </div>
+      <div class="tile glass t-cuis">
+        <label class="lab" for="cuisine"><span data-ico="globe" data-s="15"></span>Cuisine</label>
+        <div class="sel"><select id="cuisine">
+          <option value="any">Surprise me</option><option selected>Indian</option><option>South Indian</option>
+          <option>North Indian</option><option>Arabic / Middle Eastern</option><option>Italian</option>
+          <option>Asian</option><option>Mexican</option><option>Continental</option></select></div>
+      </div>
+      <div class="tile glass t-diet">
+        <div class="lab"><span data-ico="leaf" data-s="15"></span>Diet</div>
+        <div class="chips" id="diet"></div>
+      </div>
     </div>
 
-    <button class="btn lemon big" id="go">Find dishes</button>
     <div id="msg"></div>
 
     <section id="results" class="hidden">
-      <h2>What I can see</h2>
-      <div class="panel" style="margin-top:0">
+      <h2>What I can <em>see</em></h2>
+      <div class="tile glass" style="padding:14px">
         <div class="found" id="found"></div>
         <form class="add-ing" id="addForm">
-          <input id="addInput" placeholder="Add or fix an ingredient" aria-label="Add an ingredient">
-          <button class="btn ghost" type="submit">Add</button>
+          <input id="addInput" placeholder="Add or correct an ingredient" aria-label="Add an ingredient">
+          <button class="btn" type="submit">Add</button>
         </form>
-        <button class="btn" id="refresh" style="margin-top:12px">Update dishes</button>
+        <button class="btn block" id="refresh" style="margin-top:12px"><span data-ico="spark" data-s="18"></span>Update dishes</button>
       </div>
-      <h2>Dishes you can make</h2>
+      <h2>Cook these <em>tonight</em></h2>
       <div class="dishes" id="dishes"></div>
     </section>
   </main>
 
   <main id="viewSaved" class="hidden">
-    <h1>Saved recipes</h1>
-    <p class="lead">Recipes you saved open instantly, even without a new search.</p>
+    <section class="hero"><h1>Your <em>saved</em> recipes</h1>
+      <p class="lead">Saved recipes open instantly, even without a new search.</p></section>
     <div class="dishes" id="savedList"></div>
   </main>
 </div>
 
-<div class="cook hidden" id="cook" role="dialog" aria-modal="true" aria-label="Cooking mode"></div>
+<div class="cta" id="cta"><button class="btn grad block" id="go"><span data-ico="spark" data-s="20"></span><span id="goTxt">Find dishes</span></button></div>
+<nav class="dock" aria-label="Sections">
+  <button id="tabCook" aria-pressed="true"><span data-ico="chef" data-s="20"></span>Cook</button>
+  <button id="tabSaved" aria-pressed="false"><span data-ico="heart" data-s="20"></span>Saved<span id="savedCount"></span></button>
+</nav>
+
+<div class="cook hidden" id="cook" role="dialog" aria-modal="true" aria-label="Cooking mode"><div class="cbg" id="cbg"></div><div class="cview" id="cview"></div></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="overlay hidden" id="loader"><div class="card glass"><div class="big">🍳</div><p id="loaderTxt">Writing your recipe…</p></div></div>
 
 <script>
 const $ = (s) => document.querySelector(s);
@@ -226,18 +377,91 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+const buzz = (n = 12) => { try { navigator.vibrate?.(n); } catch {} };
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
+
+/* ---------- icons (inline SVG, no downloads) ---------- */
+const I = {
+  chef: '<path d="M6 13.87A4 4 0 0 1 7.5 6.03 4 4 0 0 1 12 3a4 4 0 0 1 4.5 3.03A4 4 0 0 1 18 13.87V21H6Z"/><path d="M6 17h12"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',
+  leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6.4"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  spark: '<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 17v4M17 19h4"/>',
+  right: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', left: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  speaker: '<path d="M11 4.7 6.5 9H3v6h3.5l4.5 4.3z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+};
+const ico = (n, s = 20, cls = '') => `<svg class="ico ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const paintIcons = (root = document) => root.querySelectorAll('[data-ico]').forEach((el) => { el.innerHTML = ico(el.dataset.ico, +el.dataset.s || 20); el.style.display = 'inline-flex'; });
+
+/* ---------- theme ---------- */
+function setTheme(t) {
+  document.documentElement.dataset.theme = t; store.set('pc_theme', t);
+  $('#themeColor').content = t === 'dark' ? '#120E0B' : '#FFF5E6';
+  $('#themeBtn').innerHTML = ico(t === 'dark' ? 'sun' : 'moon', 20);
+}
+setTheme(store.get('pc_theme', matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+$('#themeBtn').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
 const state = {
-  images: [],            // base64 jpeg (no prefix) + preview url
-  ingredients: [],       // confirmed list of names
-  dishes: [],
-  diet: new Set(store.get('pc_diet', [])),
-  servings: store.get('pc_servings', 2),
-  saved: store.get('pc_saved', []),
-  pw: store.get('pc_pw', ''),
-  cook: null,
+  images: [], ingredients: [], dishes: [],
+  diet: new Set(store.get('pc_diet', [])), servings: store.get('pc_servings', 2),
+  saved: store.get('pc_saved', []), pw: store.get('pc_pw', ''), cook: null,
 };
 const DIETS = ['Vegetarian','Vegan','Eggless','Gluten-free','Dairy-free','Halal','High-protein'];
+
+/* ---------- food photos from Wikipedia (free, no key) ---------- */
+const imgCache = store.get('pc_img', {});
+const inflight = new Map();
+function wikiImg(q) {
+  q = (q || '').trim().toLowerCase();
+  if (!q) return Promise.resolve('');
+  if (q in imgCache) return Promise.resolve(imgCache[q]);
+  if (inflight.has(q)) return inflight.get(q);
+  const p = (async () => {
+    try {
+      const u = 'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=4&prop=pageimages&piprop=thumbnail&pithumbsize=720&gsrsearch=' + encodeURIComponent(q);
+      const d = await (await fetch(u)).json();
+      const pages = Object.values(d.query?.pages || {}).sort((a, b) => a.index - b.index);
+      const url = pages.find((x) => x.thumbnail?.source)?.thumbnail.source || '';
+      imgCache[q] = url; store.set('pc_img', imgCache);
+      return url;
+    } catch { return ''; }
+  })();
+  inflight.set(q, p);
+  return p;
+}
+const NO_PHOTO = /^(salt|oil|cooking oil|water|sugar|ghee|butter|pepper|black pepper)$/i;
+function hydrate(root = document) {
+  root.querySelectorAll('[data-img]:not([data-d])').forEach(async (el) => {
+    el.dataset.d = '1';
+    const q = el.dataset.img; if (!q || NO_PHOTO.test(q.trim())) return;
+    const url = await wikiImg(q); if (!url) return;
+    const im = new Image();
+    im.onload = () => { if (el.isConnected) { el.style.backgroundImage = `url("${url.replace(/"/g, '%22')}")`; el.classList.add('has'); } };
+    im.src = url;
+  });
+}
+const EMOJI = [[/onion/i,'🧅'],[/tomato|tamato/i,'🍅'],[/garlic/i,'🧄'],[/ginger/i,'🫚'],[/potato|aloo/i,'🥔'],[/chill?i|mirch|pepper/i,'🌶️'],
+  [/coriander|cilantro|mint|curry leaf|leaves|herb/i,'🌿'],[/salt/i,'🧂'],[/oil/i,'🫒'],[/ghee|butter/i,'🧈'],[/water/i,'💧'],[/rice|poha|oats/i,'🍚'],
+  [/egg/i,'🥚'],[/milk|curd|yogh?urt/i,'🥛'],[/lemon|lime/i,'🍋'],[/carrot/i,'🥕'],[/pea/i,'🟢'],[/capsicum/i,'🫑'],[/corn/i,'🌽'],[/brinjal|eggplant/i,'🍆'],
+  [/cauliflower|gobi|broccoli/i,'🥦'],[/spinach|palak|greens/i,'🥬'],[/paneer|cheese/i,'🧀'],[/bread|roti|chapati/i,'🍞'],[/dal|lentil|soya|soy|beans|chana|rajma/i,'🫘'],
+  [/mushroom/i,'🍄'],[/coconut/i,'🥥'],[/turmeric|haldi/i,'🟡'],[/sugar|jaggery/i,'🍬'],[/chicken|meat|mutton|fish/i,'🍗']];
+const emojiFor = (t) => { for (const [re, e] of EMOJI) if (re.test(t || '')) return e; return '🥣'; };
 
 /* ---------- API ---------- */
 async function api(path, body) {
@@ -256,42 +480,33 @@ async function api(path, body) {
 /* ---------- Photos ---------- */
 function resizeToJpeg(file, max = 1280) {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
+    const url = URL.createObjectURL(file); const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      const sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      const dataUrl = c.toDataURL('image/jpeg', 0.82);
-      URL.revokeObjectURL(url);
-      resolve({ data: dataUrl.split(',')[1], preview: dataUrl });
+      const d = c.toDataURL('image/jpeg', 0.82); URL.revokeObjectURL(url);
+      resolve({ data: d.split(',')[1], preview: d });
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('That file could not be read as an image.')); };
     img.src = url;
   });
 }
 async function addFiles(files) {
-  const list = [...files].filter((f) => f.type.startsWith('image/'));
-  if (!list.length) return;
-  for (const f of list) {
+  for (const f of [...files].filter((f) => f.type.startsWith('image/'))) {
     if (state.images.length >= 6) { showMsg('You can add up to 6 photos at a time.', 'notice'); break; }
-    try { state.images.push(await resizeToJpeg(f)); } catch (e) { showMsg(e.message, 'error'); }
+    try { state.images.push(await resizeToJpeg(f)); buzz(8); } catch (e) { showMsg(e.message, 'error'); }
   }
   renderThumbs();
 }
 function renderThumbs() {
   $('#thumbs').innerHTML = state.images.map((im, i) =>
-    `<div class="thumb"><img src="${im.preview}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button></div>`).join('');
+    `<div class="thumb"><img src="${im.preview}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">${ico('x', 14)}</button></div>`).join('');
 }
-$('#thumbs').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-rm]'); if (!b) return;
-  e.preventDefault(); state.images.splice(+b.dataset.rm, 1); renderThumbs();
-});
+$('#thumbs').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (!b) return; e.preventDefault(); state.images.splice(+b.dataset.rm, 1); renderThumbs(); });
 $('#btnChoose').addEventListener('click', (e) => { e.preventDefault(); $('#fileInput').click(); });
 $('#btnCamera').addEventListener('click', (e) => { e.preventDefault(); $('#cameraInput').click(); });
-$('#fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
-$('#cameraInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+['#fileInput', '#cameraInput'].forEach((id) => $(id).addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; }));
 document.addEventListener('paste', (e) => {
   const files = [...(e.clipboardData?.items || [])].filter((i) => i.kind === 'file').map((i) => i.getAsFile()).filter(Boolean);
   if (files.length) { e.preventDefault(); addFiles(files); }
@@ -302,29 +517,25 @@ const drop = $('#drop');
 drop.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
 
 /* ---------- Options ---------- */
-function renderDiet() {
-  $('#diet').innerHTML = DIETS.map((d) => `<button type="button" class="chip" aria-pressed="${state.diet.has(d)}" data-d="${d}">${d}</button>`).join('');
-}
+function renderDiet() { $('#diet').innerHTML = DIETS.map((d) => `<button type="button" class="chip" aria-pressed="${state.diet.has(d)}" data-d="${d}">${d}</button>`).join(''); }
 $('#diet').addEventListener('click', (e) => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   state.diet.has(b.dataset.d) ? state.diet.delete(b.dataset.d) : state.diet.add(b.dataset.d);
-  store.set('pc_diet', [...state.diet]); renderDiet();
+  store.set('pc_diet', [...state.diet]); renderDiet(); buzz(8);
 });
 function renderServings() { $('#servings').textContent = state.servings; store.set('pc_servings', state.servings); }
-$('#minus').addEventListener('click', () => { state.servings = Math.max(1, state.servings - 1); renderServings(); });
-$('#plus').addEventListener('click', () => { state.servings = Math.min(12, state.servings + 1); renderServings(); });
+$('#minus').addEventListener('click', () => { state.servings = Math.max(1, state.servings - 1); renderServings(); buzz(8); });
+$('#plus').addEventListener('click', () => { state.servings = Math.min(12, state.servings + 1); renderServings(); buzz(8); });
 
 function showMsg(text, kind = 'error') { $('#msg').innerHTML = text ? `<div class="${kind}" role="alert">${esc(text)}</div>` : ''; }
-function showLoading(text) { $('#msg').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(text)}</div></div>`; }
+function showLoading(text) {
+  $('#msg').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(text)}</div></div><div class="skgrid"><div class="sk"></div><div class="sk"></div></div>`;
+}
 
 /* ---------- Suggest ---------- */
 function payload(useImages) {
-  return {
-    images: useImages ? state.images.map((i) => i.data) : [],
-    ingredients: useImages ? [] : state.ingredients,
-    notes: $('#notes').value, diet: [...state.diet], cuisine: $('#cuisine').value,
-    servings: state.servings, maxTime: +$('#maxTime').value,
-  };
+  return { images: useImages ? state.images.map((i) => i.data) : [], ingredients: useImages ? [] : state.ingredients,
+    notes: $('#notes').value, diet: [...state.diet], cuisine: $('#cuisine').value, servings: state.servings, maxTime: +$('#maxTime').value };
 }
 async function suggest(useImages) {
   const btns = [$('#go'), $('#refresh')]; btns.forEach((b) => (b.disabled = true));
@@ -332,75 +543,71 @@ async function suggest(useImages) {
   try {
     const out = await api('/api/suggest', payload(useImages));
     state.ingredients = (out.ingredients || []).map((i) => i.name).filter(Boolean);
-    if (!useImages) state.ingredients = state.ingredients.length ? state.ingredients : [];
     state.dishes = out.dishes || [];
     showMsg(out.note || '', 'notice');
-    renderResults();
+    renderResults(true);
+    $('#goTxt').textContent = 'Search again';
   } catch (e) { showMsg(e.message, 'error'); }
   finally { btns.forEach((b) => (b.disabled = false)); }
 }
 $('#go').addEventListener('click', () => suggest(true));
 $('#refresh').addEventListener('click', () => suggest(false));
 
-function renderResults() {
+function renderResults(scroll) {
   const has = state.ingredients.length || state.dishes.length;
   $('#results').classList.toggle('hidden', !has);
   $('#found').innerHTML = state.ingredients.length
-    ? state.ingredients.map((n, i) => `<span class="ing">${esc(n)}<button type="button" data-ri="${i}" aria-label="Remove ${esc(n)}">×</button></span>`).join('')
+    ? state.ingredients.map((n, i) => `<span class="ing glass">${emojiFor(n)} ${esc(n)}<button type="button" data-ri="${i}" aria-label="Remove ${esc(n)}">${ico('x', 13)}</button></span>`).join('')
     : '<span style="color:var(--muted)">Nothing detected yet. Add ingredients below.</span>';
   $('#dishes').innerHTML = state.dishes.length ? state.dishes.map((d, i) => dishCard(d, i)).join('')
     : '<div class="empty">No dishes yet. Add ingredients and tap Update dishes.</div>';
-  if (has) $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  hydrate($('#dishes'));
+  if (scroll && has) $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function dishCard(d, i) {
-  const miss = (d.missing || []).length ? `<div class="miss"><b>You’d need:</b> ${esc(d.missing.join(', '))}</div>` : `<div class="miss">You have everything.</div>`;
-  const pct = Math.max(0, Math.min(100, +d.match_percent || 0));
-  return `<article class="dish">
-    <div class="emo" aria-hidden="true">${esc(d.emoji || '🍽️')}</div>
-    <h3>${esc(d.name)}</h3>
-    <div class="meta">${esc(d.cuisine || '')} • ${esc(d.time_minutes || '?')} min • ${esc(d.difficulty || '')}</div>
-    <p class="desc">${esc(d.description || '')}</p>
-    <div class="match"><div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="matchtxt"><span>Uses ${esc((d.uses || []).slice(0, 5).join(', '))}</span><span>${pct}% match</span></div></div>
-    ${miss}
-    <div class="dish-actions"><button class="btn" data-cook="${i}">Start cooking</button></div>
-  </article>`;
+  const pct = Math.max(0, Math.min(100, Math.round(+d.match_percent || 0)));
+  const miss = (d.missing || []);
+  return `<article class="dish" style="--i:${i}">
+    <div class="dimg ph" data-img="${esc(d.photo_search || d.name)}"><span class="fb" aria-hidden="true">${esc(d.emoji || '🍽️')}</span></div>
+    <div class="dtop"><div class="gchips"><span class="gchip">${ico('clock', 14)} ${esc(d.time_minutes || '?')} min</span><span class="gchip">${esc(d.difficulty || 'Easy')}</span></div>
+      <div class="mring" style="--p:${pct}" role="img" aria-label="${pct} percent match"><b>${pct}</b></div></div>
+    <div class="dcontent"><div class="cu">${esc(d.cuisine || '')}</div><h3>${esc(d.name)}</h3><p>${esc(d.description || '')}</p>
+      <div class="uses"><span class="ok">${ico('check', 14)} ${esc((d.uses || []).slice(0, 4).join(', ') || 'your ingredients')}</span>${miss.length ? `<span class="no">+ need ${esc(miss.join(', '))}</span>` : '<span class="ok">Nothing to buy</span>'}</div>
+      <button class="btn grad block" data-cook="${i}">Start cooking ${ico('right', 18)}</button></div></article>`;
 }
-$('#found').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-ri]'); if (!b) return;
-  state.ingredients.splice(+b.dataset.ri, 1); renderResults();
-});
+$('#found').addEventListener('click', (e) => { const b = e.target.closest('[data-ri]'); if (!b) return; state.ingredients.splice(+b.dataset.ri, 1); renderResults(false); });
 $('#addForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const v = $('#addInput').value.trim(); if (!v) return;
+  e.preventDefault(); const v = $('#addInput').value.trim(); if (!v) return;
   v.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => state.ingredients.push(s));
-  $('#addInput').value = ''; renderResults();
+  $('#addInput').value = ''; renderResults(false);
 });
 $('#dishes').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-cook]'); if (!b) return;
   const d = state.dishes[+b.dataset.cook];
-  b.disabled = true; b.textContent = 'Writing the recipe…';
+  $('#loaderTxt').textContent = `Writing the recipe for ${d.name}…`; $('#loader').classList.remove('hidden');
   try {
     const r = await api('/api/recipe', { dish: d.name, ingredients: state.ingredients, diet: [...state.diet], servings: state.servings });
+    r.photo_search = r.photo_search || d.photo_search || d.name; r.emoji = r.emoji || d.emoji;
     openCook(r);
   } catch (err) { showMsg(err.message, 'error'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-  finally { b.disabled = false; b.textContent = 'Start cooking'; }
+  finally { $('#loader').classList.add('hidden'); }
 });
 
 /* ---------- Saved ---------- */
 const isSaved = (r) => state.saved.some((s) => s.name === r.name);
 function toggleSave(r) {
-  if (isSaved(r)) state.saved = state.saved.filter((s) => s.name !== r.name);
-  else state.saved.unshift(r);
+  state.saved = isSaved(r) ? state.saved.filter((s) => s.name !== r.name) : [r, ...state.saved];
   store.set('pc_saved', state.saved); renderSaved();
 }
 function renderSaved() {
-  $('#savedCount').textContent = state.saved.length ? `(${state.saved.length})` : '';
-  $('#savedList').innerHTML = state.saved.length ? state.saved.map((r, i) => `<article class="dish">
-    <div class="emo" aria-hidden="true">${esc(r.emoji || '🍽️')}</div><h3>${esc(r.name)}</h3>
-    <div class="meta">${esc(r.total_time_minutes || '?')} min • ${esc(r.difficulty || '')} • serves ${esc(r.servings || '')}</div>
-    <div class="dish-actions"><button class="btn" data-open="${i}">Cook</button><button class="btn ghost" data-del="${i}">Remove</button></div></article>`).join('')
-    : '<div class="empty">Nothing saved yet. Open a recipe and tap Save.</div>';
+  $('#savedCount').textContent = state.saved.length ? ` ${state.saved.length}` : '';
+  $('#savedList').innerHTML = state.saved.length ? state.saved.map((r, i) => `<article class="dish" style="--i:${i}">
+    <div class="dimg ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
+    <div class="dtop"><div class="gchips"><span class="gchip">${ico('clock', 14)} ${esc(r.total_time_minutes || '?')} min</span><span class="gchip">${esc(r.difficulty || '')}</span></div></div>
+    <div class="dcontent"><h3>${esc(r.name)}</h3><p>${esc(r.summary || '')}</p>
+      <div class="rowbtn"><button class="btn grad" data-open="${i}">Cook ${ico('right', 18)}</button><button class="btn sq" data-del="${i}" aria-label="Remove ${esc(r.name)}">${ico('trash', 20)}</button></div></div></article>`).join('')
+    : '<div class="empty">Nothing saved yet. Open a recipe and tap the heart.</div>';
+  hydrate($('#savedList'));
 }
 $('#savedList').addEventListener('click', (e) => {
   const o = e.target.closest('[data-open]'), d = e.target.closest('[data-del]');
@@ -409,109 +616,270 @@ $('#savedList').addEventListener('click', (e) => {
 });
 function setView(v) {
   $('#viewCook').classList.toggle('hidden', v !== 'cook'); $('#viewSaved').classList.toggle('hidden', v !== 'saved');
+  $('#cta').classList.toggle('hidden', v !== 'cook');
   $('#tabCook').setAttribute('aria-pressed', v === 'cook'); $('#tabSaved').setAttribute('aria-pressed', v === 'saved');
+  window.scrollTo({ top: 0 }); buzz(8);
 }
 $('#tabCook').addEventListener('click', () => setView('cook'));
 $('#tabSaved').addEventListener('click', () => setView('saved'));
 
-/* ---------- Cooking mode ---------- */
-let wake = null, tick = null;
+/* ---------- Interactive cooking mode ---------- */
+const ACTIONS = {
+  prep:{e:'🧺',c:'#7CD99B',a:'bob'}, chop:{e:'🔪',c:'#FFB36B',a:'chop'}, heat:{e:'🍳',c:'#FF8A5B',a:'bob',s:1}, temper:{e:'✨',c:'#FFD54A',a:'sizzle',s:1},
+  saute:{e:'🥘',c:'#FFA64D',a:'stir',s:1}, fry:{e:'🍳',c:'#FF8A5B',a:'sizzle',s:1}, boil:{e:'🫕',c:'#6EC6FF',a:'bob',s:1}, simmer:{e:'🍲',c:'#FFA64D',a:'bob',s:1},
+  pressure:{e:'🍲',c:'#A99BFF',a:'sizzle',s:1}, mix:{e:'🥣',c:'#F2C48A',a:'stir'}, grind:{e:'🌀',c:'#C79BFF',a:'spin'}, knead:{e:'🫓',c:'#F6D08A',a:'chop'},
+  steam:{e:'♨️',c:'#7FD8E8',a:'bob',s:1}, roast:{e:'🔥',c:'#FF7A4D',a:'sizzle',s:1}, rest:{e:'⏳',c:'#9FD8A6',a:'bob'}, serve:{e:'🍽️',c:'#FFD54A',a:'popbig'},
+};
+const FLAME = { off: 0, low: 1, medium: 2, high: 3 };
+const fmt = (s) => { s = Math.max(0, s); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+let wake = null, tick = null, rec = null;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
 async function keepAwake() { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
 function openCook(recipe) {
-  state.cook = { r: recipe, i: 0, tab: 'steps', checked: new Set(), timer: null };
-  $('#cook').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  state.cook = { r: recipe, i: -1, timers: {}, added: new Set(), gathered: new Set(), speak: store.get('pc_speak', false), listen: false };
+  const el = $('#cook'); $('#cbg').style.backgroundImage = '';
+  wikiImg(recipe.photo_search || recipe.name).then((u) => { if (u && state.cook?.r === recipe) $('#cbg').style.backgroundImage = `url("${u.replace(/"/g, '%22')}")`; });
+  el.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => el.classList.add('show'));
   keepAwake(); renderCook();
 }
 function closeCook() {
-  clearInterval(tick); tick = null; state.cook = null;
-  $('#cook').classList.add('hidden'); document.body.style.overflow = ''; try { wake?.release(); } catch {}
+  clearInterval(tick); tick = null;
+  try { if (rec && state.cook) { state.cook.listen = false; rec.stop(); } } catch {} rec = null;
+  try { speechSynthesis.cancel(); } catch {}
+  state.cook = null; document.querySelectorAll('.confetti').forEach((n) => n.remove());
+  const el = $('#cook'); el.classList.remove('show'); setTimeout(() => { if (!state.cook) el.classList.add('hidden'); }, 380);
+  document.body.style.overflow = ''; try { wake?.release(); } catch {}
   renderSaved();
 }
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = speechSynthesis.getVoices().find((x) => /en[-_]IN/i.test(x.lang)); if (v) u.voice = v;
+    u.lang = 'en-IN'; u.rate = 0.95; speechSynthesis.speak(u);
+  } catch {}
+}
+function speakStep() {
+  const c = state.cook; const s = c?.r.steps?.[c.i]; if (!s) return;
+  speak([s.title, s.instruction, s.cue ? `Look for: ${s.cue}` : ''].filter(Boolean).join('. '));
+}
+function swap(dir, fn) {
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.dataset.dir = dir; document.startViewTransition(fn);
+  } else fn();
+}
+function go(to) {
+  const c = state.cook; if (!c) return; const n = (c.r.steps || []).length;
+  const from = c.i; c.i = Math.max(-1, Math.min(n, to)); if (c.i === from) return;
+  buzz(); swap(c.i > from ? 'next' : 'prev', renderCook);
+  if (c.i >= 0 && c.i < n && c.speak) speakStep();
+  if (c.i >= n) { confetti(); if (c.speak) speak('Your dish is ready. Enjoy your meal!'); }
+}
+function confetti() {
+  const box = document.createElement('div'); box.className = 'confetti';
+  box.innerHTML = Array.from({ length: 30 }, () => `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random() * 1.3}s">${['🎉','✨','🌶️','🍋','🌿','🥳','🧡'][Math.floor(Math.random() * 7)]}</span>`).join('');
+  document.body.appendChild(box); setTimeout(() => box.remove(), 5200);
+}
+
 function renderCook() {
   const c = state.cook; if (!c) return;
-  const r = c.r, steps = r.steps || [], last = c.i >= steps.length;
-  const pct = steps.length ? Math.round((Math.min(c.i, steps.length) / steps.length) * 100) : 0;
-  let body = '';
-  if (c.tab === 'ing') {
-    body = `<ul class="cl">${(r.ingredients || []).map((g, k) => `<li><label><input type="checkbox" data-k="${k}" ${c.checked.has(k) ? 'checked' : ''}><span>${esc(g.item)}</span>
-      <span class="amt">${esc(g.amount)}${g.have === false ? '<br><span class="need">need to buy</span>' : ''}</span></label></li>`).join('')}</ul>
-      ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
-  } else if (last) {
-    body = `<div class="finish"><div class="big-emo">${esc(r.emoji || '🍽️')}</div><h2 class="step-title">Ready to eat!</h2>
-      <p class="step-text" style="margin:0 auto">${esc(r.name)} is done. Enjoy your meal.</p></div>
-      ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
-  } else {
-    const s = steps[c.i];
-    body = `<span class="stepnum">${c.i + 1}</span><h2 class="step-title">${esc(s.title)}</h2><p class="step-text">${esc(s.instruction)}</p>
-      ${s.tip ? `<div class="tip">${esc(s.tip)}</div>` : ''}
-      ${s.timer_minutes ? timerBox(s.timer_minutes) : ''}`;
+  const r = c.r, steps = r.steps || [], n = steps.length, i = c.i;
+  const sub = i < 0 ? 'Get ready' : i >= n ? 'All done!' : `Step ${i + 1} of ${n}`;
+  const body = i < 0 ? prepHTML(r) : i >= n ? finishHTML(r) : stepHTML(steps[i], i);
+  const next = i < 0 ? `Let’s start cooking ${ico('right', 20)}` : i >= n ? 'Done' : i === n - 1 ? 'Finish 🎉' : `Next step ${ico('right', 20)}`;
+  $('#cview').innerHTML = `
+    <div class="ctop">
+      <button class="ib glass" id="cx" aria-label="Close cooking mode">${ico('x', 20)}</button>
+      <div class="ctitle"><b>${esc(r.name)}</b><small>${sub}</small></div>
+      <button class="ib glass ${c.speak ? 'on' : ''}" id="cspeak" aria-label="Read steps aloud" aria-pressed="${c.speak}">${ico('speaker', 20)}</button>
+      ${SR ? `<button class="ib glass ${c.listen ? 'on' : ''}" id="cmic" aria-label="Voice commands" aria-pressed="${c.listen}">${ico('mic', 20)}</button>` : ''}
+      <button class="ib glass ${isSaved(r) ? 'on' : ''}" id="csave" aria-label="Save recipe">${ico('heart', 20).replace('fill="none"', isSaved(r) ? 'fill="currentColor"' : 'fill="none"')}</button>
+    </div>
+    <div class="segs">${steps.map((_, k) => `<button class="seg ${k < i ? 'done' : k === i ? 'now' : ''}" data-go="${k}" aria-label="Go to step ${k + 1}"></button>`).join('')}</div>
+    <div class="pills" id="pills">${pillsHTML()}</div>
+    <div class="cbody" id="cbody"><div class="cinner">${body}</div></div>
+    <div class="cnav">${i > -1 && i < n ? `<button class="btn back" id="cprev" aria-label="Previous step">${ico('left', 22)}</button>` : ''}<button class="btn grad" id="cnext">${next}</button></div>`;
+  hydrate($('#cview'));
+}
+
+function prepHTML(r) {
+  const c = state.cook; const list = r.ingredients || [];
+  return `<div class="hero2 ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
+    <div class="meta"><span class="glass">${ico('clock', 16)} ${esc(r.total_time_minutes || '?')} min</span><span class="glass">${esc(r.difficulty || 'Easy')}</span><span class="glass">${ico('users', 16)} Serves ${esc(r.servings || '')}</span></div>
+    ${r.summary ? `<p class="stext">${esc(r.summary)}</p>` : ''}
+    <div class="lbl">Gather your ingredients <small id="gcount">${c.gathered.size} of ${list.length} ready</small></div>
+    <div class="ichips">${list.map((g, k) => chipHTML(g, `g${k}`, c.gathered.has(k), g.have === false)).join('')}</div>
+    ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
+}
+function chipHTML(g, key, on, need) {
+  return `<button class="ichip glass ${on ? 'on' : ''}" data-chip="${key}" aria-pressed="${on}">
+    <span class="ithumb" data-img="${esc(g.item)}"><span class="fb">${emojiFor(g.item)}</span></span>
+    <span class="itxt"><b>${esc(g.item)}</b><small>${esc(g.amount || '')}</small>${need ? '<span class="need">need to buy</span>' : ''}</span>
+    <span class="tick">${ico('check', 18)}</span></button>`;
+}
+function stepHTML(s, k) {
+  const a = ACTIONS[s.action] || ACTIONS.prep; const c = state.cook;
+  const lvl = FLAME[s.flame];
+  const puffs = a.s ? '<span class="puff"></span><span class="puff"></span><span class="puff"></span><span class="puff"></span>' : '';
+  const flame = lvl === undefined ? '' : lvl === 0 ? '<div class="flame glass">Flame off</div>'
+    : `<div class="flame glass">${[1, 2, 3].map((n) => ico('flame', 17, `fl ${lvl >= n ? 'on' : ''}`)).join('')}<span style="margin-left:4px">${esc(s.flame)}</span></div>`;
+  const uses = s.uses || [];
+  return `<div class="stage glass a-${a.a}" style="--vc:${a.c}"><span class="bignum" aria-hidden="true">${String(k + 1).padStart(2, '0')}</span>${puffs}${flame}<span class="vemo" aria-hidden="true">${a.e}</span></div>
+    <h2 class="stitle">${esc(s.title)}</h2><p class="stext">${esc(s.instruction)}</p>
+    ${uses.length ? `<div class="lbl">Add in this step <small id="ucount">${uses.filter((_, j) => c.added.has(`${k}:${j}`)).length} of ${uses.length} added</small></div>
+      <div class="ichips">${uses.map((g, j) => chipHTML(g, `u${k}:${j}`, c.added.has(`${k}:${j}`), false)).join('')}</div>` : ''}
+    ${s.cue ? `<div class="cue glass"><b>Look for:</b> ${esc(s.cue)}</div>` : ''}
+    ${s.tip ? `<div class="tip">💡 ${esc(s.tip)}</div>` : ''}
+    ${s.timer_minutes ? `<div id="timerWrap">${timerHTML(k, s.timer_minutes)}</div>` : ''}`;
+}
+function finishHTML(r) {
+  return `<div class="finish"><div class="hero2 ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
+    <h2 class="stitle">Ready to <em style="font-size:1.15em">eat!</em> 🎉</h2><p class="stext">${esc(r.name)} is done. Serve it hot and enjoy.</p>
+    ${(r.tips || []).length ? `<div class="tip tipsbox"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+      <button class="btn" id="csave2">${ico('heart', 18)} ${isSaved(r) ? 'Saved' : 'Save recipe'}</button>
+      <button class="btn" id="cshare">${ico('share', 18)} Share</button></div></div>`;
+}
+async function shareRecipe(r) {
+  const text = `${r.name}\n\nIngredients:\n${(r.ingredients || []).map((g) => `• ${g.item} – ${g.amount}`).join('\n')}\n\nSteps:\n${(r.steps || []).map((s, i) => `${i + 1}. ${s.title}: ${s.instruction}`).join('\n')}\n\nMade with PantryChef`;
+  try {
+    if (navigator.share) await navigator.share({ title: r.name, text });
+    else { await navigator.clipboard.writeText(text); toast('Recipe copied'); }
+  } catch {}
+}
+
+/* timers (keep running across steps) */
+function timerHTML(k, mins) {
+  const t = state.cook.timers[k]; const total = t ? t.total : mins * 60; const left = t ? t.left : total;
+  const run = t && t.running, done = t && t.left <= 0; const C = 2 * Math.PI * 54;
+  return `<div class="timer ${done ? 'done' : ''}"><svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+    <defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC83D"/><stop offset="1" stop-color="#FF4D5E"/></linearGradient></defs>
+    <circle class="bgc" cx="60" cy="60" r="54"/>
+    <circle class="fg" id="ringfg" cx="60" cy="60" r="54" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - (total ? left / total : 1))}"/></svg>
+    <div class="tmid"><div class="t" id="tv">${fmt(left)}</div><small>${done ? 'Time’s up!' : run ? 'running' : t ? 'paused' : 'timer'}</small></div></div>
+    <div class="tbtns"><button class="btn grad" id="tbtn">${done ? 'Stop' : run ? 'Pause' : t ? 'Resume' : '▶ Start timer'}</button>
+    <button class="btn" id="tplus">+1 min</button>${t ? '<button class="btn" id="treset">Reset</button>' : ''}</div>`;
+}
+function pillsHTML() {
+  const c = state.cook; if (!c) return '';
+  return Object.entries(c.timers).filter(([, t]) => t.running || t.left <= 0)
+    .map(([k, t]) => `<button class="pill ${t.left <= 0 ? 'done' : ''}" data-go="${k}">${ico('clock', 14)} ${esc(t.label)} · ${t.left <= 0 ? 'done!' : fmt(t.left)}</button>`).join('');
+}
+function refreshTimerUI() {
+  const c = state.cook; if (!c) return; const s = c.r.steps?.[c.i];
+  const w = $('#timerWrap'); if (w && s?.timer_minutes) w.innerHTML = timerHTML(c.i, s.timer_minutes);
+  const p = $('#pills'); if (p) p.innerHTML = pillsHTML();
+}
+function paintTimers() {
+  const c = state.cook; if (!c) return; const t = c.timers[c.i];
+  if (t) {
+    const tv = $('#tv'), fg = $('#ringfg');
+    if (tv) tv.textContent = fmt(t.left);
+    if (fg) fg.setAttribute('stroke-dashoffset', 2 * Math.PI * 54 * (1 - t.left / t.total));
   }
-  $('#cook').innerHTML = `
-    <div class="cook-top"><button class="x" id="cx" aria-label="Close cooking mode">×</button>
-      <h2>${esc(r.name)}</h2>
-      <button class="btn ${isSaved(r) ? '' : 'ghost'}" id="csave">${isSaved(r) ? 'Saved ✓' : 'Save'}</button></div>
-    <div class="tabs"><button data-t="steps" aria-pressed="${c.tab === 'steps'}">Steps</button><button data-t="ing" aria-pressed="${c.tab === 'ing'}">Ingredients (${(r.ingredients || []).length})</button></div>
-    <div class="prog"><i style="width:${pct}%"></i></div>
-    <div class="cook-body"><div class="cook-inner">${body}</div></div>
-    ${c.tab === 'steps' ? `<div class="cook-nav"><button class="btn ghost" id="cprev" ${c.i === 0 ? 'disabled' : ''}>Back</button>
-      <button class="btn lemon" id="cnext">${last ? 'Close' : c.i === steps.length - 1 ? 'Finish' : 'Next step'}</button></div>` : ''}`;
+  const p = $('#pills'); if (p) p.innerHTML = pillsHTML();
 }
-function timerBox(mins) {
-  const t = state.cook.timer;
-  const active = t && t.step === state.cook.i;
-  const secs = active ? t.left : mins * 60;
-  const done = active && t.left <= 0;
-  return `<div class="timer ${done ? 'done' : ''}" id="timerBox"><div class="t" id="tv">${fmt(secs)}</div>
-    <button class="btn" id="tbtn">${done ? 'Stop' : active && t.running ? 'Pause' : active ? 'Resume' : 'Start timer'}</button>
-    ${active ? '<button class="btn ghost" id="treset">Reset</button>' : ''}</div>`;
+function ensureTick() {
+  if (tick) return;
+  tick = setInterval(() => {
+    const c = state.cook; if (!c) { clearInterval(tick); tick = null; return; }
+    let running = false;
+    for (const [k, t] of Object.entries(c.timers)) {
+      if (!t.running) continue;
+      t.left -= 1;
+      if (t.left <= 0) { t.left = 0; t.running = false; alarm(+k); } else running = true;
+    }
+    paintTimers();
+    if (!running) { clearInterval(tick); tick = null; }
+  }, 1000);
 }
-const fmt = (s) => { s = Math.max(0, s); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+function alarm(k) {
+  const c = state.cook; const s = c.r.steps[k];
+  beep(); buzz([300, 150, 300]); toast(`⏰ ${s.title} – time’s up!`);
+  if (c.speak) speak(`Time's up for ${s.title}`);
+  if (c.i === k) refreshTimerUI();
+}
 function beep() {
   try {
     const a = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.35, 0.7].forEach((d) => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
-      o.frequency.value = 880; g.gain.value = 0.2; o.start(a.currentTime + d); o.stop(a.currentTime + d + 0.2); });
+    [0, 0.35, 0.7].forEach((d) => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = 0.2; o.start(a.currentTime + d); o.stop(a.currentTime + d + 0.2); });
   } catch {}
-  navigator.vibrate?.([300, 150, 300]);
 }
-function startTimer() {
-  const c = state.cook, mins = c.r.steps[c.i].timer_minutes;
-  if (!c.timer || c.timer.step !== c.i) c.timer = { step: c.i, left: mins * 60, running: false };
-  const t = c.timer;
-  if (t.left <= 0) { clearInterval(tick); t.running = false; c.timer = null; return renderCook(); }
-  if (t.running) { t.running = false; clearInterval(tick); }
-  else {
-    t.running = true; clearInterval(tick);
-    tick = setInterval(() => {
-      t.left -= 1;
-      const tv = $('#tv');
-      if (t.left <= 0) { clearInterval(tick); t.running = false; beep(); if (state.cook && state.cook.i === t.step) renderCook(); }
-      else if (tv && state.cook && state.cook.i === t.step) tv.textContent = fmt(t.left);
-    }, 1000);
-  }
-  renderCook();
+function getTimer(create) {
+  const c = state.cook, k = c.i, s = c.r.steps[k];
+  if (!c.timers[k] && create) c.timers[k] = { total: s.timer_minutes * 60, left: s.timer_minutes * 60, running: false, label: s.title };
+  return c.timers[k];
 }
+function toggleTimer() {
+  const c = state.cook; const t = getTimer(true);
+  if (t.left <= 0) { delete c.timers[c.i]; return refreshTimerUI(); }
+  t.running = !t.running; if (t.running) ensureTick(); refreshTimerUI(); buzz(10);
+}
+
+/* voice commands */
+function toggleListen() {
+  const c = state.cook; if (!SR) return toast('Voice commands are not supported in this browser');
+  if (c.listen) { c.listen = false; try { rec?.stop(); } catch {} rec = null; return renderCook(); }
+  c.listen = true; startRec(); toast('Listening: say “next”, “back”, “repeat” or “start timer”'); renderCook();
+}
+function startRec() {
+  rec = new SR(); rec.lang = 'en-IN'; rec.continuous = true; rec.interimResults = false;
+  rec.onresult = (e) => voiceCmd(e.results[e.results.length - 1][0].transcript.toLowerCase());
+  rec.onend = () => { if (state.cook?.listen) { try { rec.start(); } catch {} } };
+  rec.onerror = (ev) => { if (ev.error === 'not-allowed' && state.cook) { state.cook.listen = false; toast('Microphone permission was denied'); renderCook(); } };
+  try { rec.start(); } catch {}
+}
+function voiceCmd(t) {
+  const c = state.cook; if (!c) return; const s = c.r.steps?.[c.i];
+  if (/\b(next|aage|continue|forward)\b/.test(t)) go(c.i + 1);
+  else if (/\b(back|previous|pichla|before)\b/.test(t)) go(c.i - 1);
+  else if (/\b(repeat|again|read)\b/.test(t)) speakStep();
+  else if (/\btimer\b|\bstart\b/.test(t) && s?.timer_minutes) { const tm = getTimer(true); if (!tm.running) toggleTimer(); }
+  else if (/\b(stop|pause)\b/.test(t) && s?.timer_minutes) { const tm = getTimer(false); if (tm?.running) toggleTimer(); }
+}
+
+/* events (delegated, so re-rendering never loses them) */
 $('#cook').addEventListener('click', (e) => {
-  const c = state.cook; if (!c) return;
+  const c = state.cook; if (!c) return; const n = (c.r.steps || []).length;
+  const chip = e.target.closest('[data-chip]');
+  if (chip) {
+    const key = chip.dataset.chip; const on = !chip.classList.contains('on');
+    chip.classList.toggle('on', on); chip.setAttribute('aria-pressed', on); buzz(8);
+    if (key[0] === 'g') { const k = +key.slice(1); on ? c.gathered.add(k) : c.gathered.delete(k); const g = $('#gcount'); if (g) g.textContent = `${c.gathered.size} of ${(c.r.ingredients || []).length} ready`; }
+    else { const id = key.slice(1); on ? c.added.add(id) : c.added.delete(id); const u = $('#ucount'); if (u) { const s = c.r.steps[c.i]; u.textContent = `${(s.uses || []).filter((_, j) => c.added.has(`${c.i}:${j}`)).length} of ${s.uses.length} added`; } }
+    return;
+  }
+  const goBtn = e.target.closest('[data-go]'); if (goBtn) return go(+goBtn.dataset.go);
   const id = e.target.closest('button')?.id;
-  const tab = e.target.closest('[data-t]');
   if (id === 'cx') return closeCook();
-  if (id === 'csave') { toggleSave(c.r); return renderCook(); }
-  if (tab) { c.tab = tab.dataset.t; return renderCook(); }
-  if (id === 'cprev') { c.i = Math.max(0, c.i - 1); return renderCook(); }
-  if (id === 'cnext') { if (c.i >= c.r.steps.length) return closeCook(); c.i += 1; return renderCook(); }
-  if (id === 'tbtn') return startTimer();
-  if (id === 'treset') { clearInterval(tick); c.timer = null; return renderCook(); }
+  if (id === 'cprev') return go(c.i - 1);
+  if (id === 'cnext') return c.i >= n ? closeCook() : go(c.i + 1);
+  if (id === 'csave' || id === 'csave2') { toggleSave(c.r); toast(isSaved(c.r) ? 'Saved to your recipes' : 'Removed from saved'); return renderCook(); }
+  if (id === 'cshare') return shareRecipe(c.r);
+  if (id === 'cspeak') { c.speak = !c.speak; store.set('pc_speak', c.speak); try { speechSynthesis.cancel(); } catch {} renderCook(); if (c.speak) (c.i >= 0 && c.i < n ? speakStep() : speak(c.r.name)); return; }
+  if (id === 'cmic') return toggleListen();
+  if (id === 'tbtn') return toggleTimer();
+  if (id === 'tplus') { const t = getTimer(true); t.total += 60; t.left += 60; return refreshTimerUI(); }
+  if (id === 'treset') { delete c.timers[c.i]; return refreshTimerUI(); }
 });
-$('#cook').addEventListener('change', (e) => {
-  const k = e.target.dataset?.k; if (k === undefined || !state.cook) return;
-  e.target.checked ? state.cook.checked.add(+k) : state.cook.checked.delete(+k);
+let tx = 0, ty = 0;
+$('#cook').addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+$('#cook').addEventListener('touchend', (e) => {
+  const c = state.cook; if (!c || e.target.closest('.pills,input')) return;
+  const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 70 && Math.abs(dy) < 45) go(c.i + (dx < 0 ? 1 : -1));
+}, { passive: true });
+document.addEventListener('keydown', (e) => {
+  const c = state.cook; if (!c) return;
+  if (e.key === 'Escape') closeCook(); else if (e.key === 'ArrowRight') go(c.i + 1); else if (e.key === 'ArrowLeft') go(c.i - 1);
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.cook) closeCook(); });
 document.addEventListener('visibilitychange', () => { if (state.cook && document.visibilityState === 'visible') keepAwake(); });
 
 /* ---------- init ---------- */
-renderDiet(); renderServings(); renderSaved();
+paintIcons(); renderDiet(); renderServings(); renderSaved();
 </script>
 </body>
 </html>
