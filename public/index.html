@@ -282,6 +282,16 @@ html[data-dir="prev"]::view-transition-new(step){animation:.34s cubic-bezier(.2,
 .ib.heartb.on{background:linear-gradient(135deg,#FF5C6C,#FF8A1F);color:#fff;border-color:transparent}
 .ithumb.has{background-size:80%;background-color:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
 .ithumb.has .fb{display:none}
+
+/* search by dish name */
+.searchbar{display:flex;gap:8px;align-items:center;border-radius:24px;padding:6px 6px 6px 16px;margin-bottom:10px}
+.searchbar .ico{color:var(--muted)}
+.searchbar input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:16px;min-height:48px;color:var(--ink)}
+.searchbar .btn{min-height:48px;padding:0 18px;border-radius:18px;white-space:nowrap}
+.quick{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 6px;padding:2px 16px 6px;scrollbar-width:none}
+.quick::-webkit-scrollbar{display:none}
+.orline{display:flex;align-items:center;gap:12px;color:var(--muted);font-weight:700;font-size:.9rem;margin:18px 0 14px}
+.orline::before,.orline::after{content:'';flex:1;height:1px;background:var(--stroke)}
 </style>
 </head>
 <body>
@@ -300,6 +310,15 @@ html[data-dir="prev"]::view-transition-new(step){animation:.34s cubic-bezier(.2,
       <h1>What’s in your <em>kitchen?</em></h1>
       <p class="lead">Click photos of what you have. Get dishes you can cook right now, with easy step-by-step help.</p>
     </section>
+
+    <form class="searchbar glass" id="dishForm" role="search">
+      <span data-ico="search" data-s="20"></span>
+      <input id="dishInput" type="search" placeholder="Type any dish, e.g. Paneer Butter Masala" aria-label="Dish name" maxlength="80" autocomplete="off" enterkeyhint="search">
+      <button class="btn grad" type="submit" id="dishGo">Get recipe</button>
+    </form>
+    <div class="quick" id="quick"></div>
+    <div id="sMsg"></div>
+    <div class="orline">or cook with what you have</div>
 
     <div class="bento">
       <label class="tile glass t-photos" id="drop" for="fileInput">
@@ -413,6 +432,7 @@ const I = {
   flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
   trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
 };
 const ico = (n, s = 20, cls = '') => `<svg class="ico ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
 const paintIcons = (root = document) => root.querySelectorAll('[data-ico]').forEach((el) => { el.innerHTML = ico(el.dataset.ico, +el.dataset.s || 20); el.style.display = 'inline-flex'; });
@@ -667,6 +687,40 @@ $('#dishes').addEventListener('click', async (e) => {
   finally { $('#loader').classList.add('hidden'); }
 });
 
+
+/* ---------- Cook any dish by name ---------- */
+const POPULAR = ['Masala Dosa', 'Dal Tadka', 'Chicken Biryani', 'Poha', 'Paneer Butter Masala', 'Aloo Paratha', 'Idli Sambar', 'Veg Pulao'];
+const titleCase = (s) => s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+function renderQuick() {
+  const rec = store.get('pc_recent', []);
+  const list = [...rec, ...POPULAR.filter((p) => !rec.includes(p))].slice(0, 10);
+  $('#quick').innerHTML = list.map((n) => `<button type="button" class="chip" data-dish="${esc(n)}">${rec.includes(n) ? '🕘 ' : ''}${esc(n)}</button>`).join('');
+}
+function remember(name) {
+  const rec = [name, ...store.get('pc_recent', []).filter((x) => x.toLowerCase() !== name.toLowerCase())].slice(0, 6);
+  store.set('pc_recent', rec); renderQuick();
+}
+async function cookByName(raw) {
+  const dish = String(raw || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  const box = $('#sMsg');
+  if (dish.length < 2) { box.innerHTML = '<div class="error" role="alert">Type a dish name first, like “Masala Dosa”.</div>'; return; }
+  box.innerHTML = '';
+  const key = 'by:' + dish.toLowerCase();
+  if (state.recipes[key]) return openCook(state.recipes[key]);
+  $('#loaderTxt').textContent = `Writing the recipe for ${dish}…`; $('#loader').classList.remove('hidden'); $('#dishGo').disabled = true;
+  try {
+    const r = await api('/api/recipe', { dish, ingredients: state.ingredients, diet: [...state.diet], servings: state.servings });
+    if (!Array.isArray(r.steps) || !r.steps.length) throw new Error('I could not find a recipe for that. Please check the dish name and try again.');
+    r.name = r.name || titleCase(dish); r.photo_search = r.photo_search || r.name;
+    r.direct = !state.ingredients.length;            // no ingredient list known: do not mark things as "need to buy"
+    state.recipes[key] = r; state.recipes[r.name] = r;
+    remember(titleCase(dish)); openCook(r);
+  } catch (err) { box.innerHTML = `<div class="error" role="alert">${esc(err.message)}</div>`; }
+  finally { $('#loader').classList.add('hidden'); $('#dishGo').disabled = false; }
+}
+$('#dishForm').addEventListener('submit', (e) => { e.preventDefault(); $('#dishInput').blur(); cookByName($('#dishInput').value); });
+$('#quick').addEventListener('click', (e) => { const b = e.target.closest('[data-dish]'); if (!b) return; $('#dishInput').value = b.dataset.dish; cookByName(b.dataset.dish); });
+
 /* ---------- Saved ---------- */
 const isSaved = (r) => state.saved.some((s) => s.name === r.name);
 function toggleSave(r) {
@@ -809,7 +863,7 @@ function prepHTML(r) {
     ${r.summary ? `<p class="stext">${esc(r.summary)}</p>` : ''}
     <button class="btn block ${isSaved(r) ? 'grad' : ''}" id="csave3" style="margin-top:12px">${ico('heart', 18).replace('fill="none"', isSaved(r) ? 'fill="currentColor"' : 'fill="none"')} ${isSaved(r) ? 'Saved to your recipes' : 'Save this recipe'}</button>
     <div class="lbl">Gather your ingredients <small id="gcount">${c.gathered.size} of ${list.length} ready</small></div>
-    <div class="ichips">${list.map((g, k) => chipHTML(g, `g${k}`, c.gathered.has(k), g.have === false)).join('')}</div>
+    <div class="ichips">${list.map((g, k) => chipHTML(g, `g${k}`, c.gathered.has(k), g.have === false && !r.direct)).join('')}</div>
     ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
 }
 function chipHTML(g, key, on, need) {
@@ -977,7 +1031,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('visibilitychange', () => { if (state.cook && document.visibilityState === 'visible') keepAwake(); });
 
 /* ---------- init ---------- */
-paintIcons(); renderDiet(); renderServings(); renderSaved();
+paintIcons(); renderDiet(); renderServings(); renderSaved(); renderQuick();
 </script>
 </body>
 </html>
