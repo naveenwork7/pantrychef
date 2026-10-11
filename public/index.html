@@ -91,7 +91,7 @@ select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;b
 .heart{flex:0 0 auto!important;width:48px;padding:0!important}
 
 .notice{background:#FFF6D6;border:1px solid var(--lemon);padding:12px 14px;border-radius:12px;margin-top:14px}
-.error{background:#FBE4E8;border:1px solid var(--radish);padding:12px 14px;border-radius:12px;margin-top:14px;color:#7a1f31}
+.error{white-space:pre-wrap;word-break:break-word;font-size:.92rem;background:#FBE4E8;border:1px solid var(--radish);padding:12px 14px;border-radius:12px;margin-top:14px;color:#7a1f31}
 .empty{padding:34px 10px;text-align:center;color:var(--muted)}
 .loading{display:flex;gap:14px;align-items:center;padding:24px 4px;color:var(--muted);font-weight:500}
 .spin{width:26px;height:26px;border-radius:50%;border:4px solid var(--mint);border-top-color:var(--leaf);animation:spin 0.9s linear infinite;flex:none}
@@ -249,7 +249,7 @@ async function api(path, body) {
     return api(path, body);
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+  if (!res.ok) throw new Error((data.error || 'Something went wrong. Please try again.') + (data.detail ? '\n' + data.detail : ''));
   return data;
 }
 
