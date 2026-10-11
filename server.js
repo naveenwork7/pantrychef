@@ -44,7 +44,7 @@ const PROVIDERS = {
     visionModels: ['gemini-flash-latest'], textModels: ['gemini-flash-latest'],
   },
   github: {
-    type: 'openai', url: 'https://models.github.ai/inference/chat/completions', key: githubKey, override: env('GITHUB_MODEL'),
+    type: 'openai', url: 'https://models.github.ai/inference/chat/completions', github: true, key: githubKey, override: env('GITHUB_MODEL'),
     visionModels: ['openai/gpt-4.1', 'openai/gpt-4o', 'openai/gpt-4o-mini'],
     textModels: ['openai/gpt-4.1', 'openai/gpt-4o-mini'],
   },
@@ -53,9 +53,9 @@ const PROVIDERS = {
     visionModels: ['gpt-4o', 'gpt-4o-mini'], textModels: ['gpt-4o-mini', 'gpt-4o'],
   },
   groq: {
-    type: 'openai', url: 'https://api.groq.com/openai/v1/chat/completions', key: env('GROQ_API_KEY'), maxImages: 5,
+    type: 'openai', url: 'https://api.groq.com/openai/v1/chat/completions', key: env('GROQ_API_KEY'), maxImages: 3,
     override: env('GROQ_MODEL'),
-    visionModels: ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'],
+    visionModels: ['qwen/qwen3.8-27b', 'meta-llama/llama-4-scout-17b-16e-instruct'],
     textModels: ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'],
   },
   openrouter: {
@@ -104,7 +104,7 @@ async function discover(name, p, vision) {
   if (name === 'groq') {
     const d = await getJson('https://api.groq.com/openai/v1/models', bearer);
     const ids = (d.data || []).map((m) => m.id).filter((id) => !/(whisper|tts|guard|playai|orpheus|embed|compound|safeguard|distil)/i.test(id));
-    return { ids: vision ? ids.filter((id) => /(vision|llama-4|maverick|scout|-vl|pixtral|llava|gemma-3)/i.test(id)) : ids };
+    return { ids: vision ? ids.filter((id) => /(vision|qwen|llama-4|maverick|scout|-vl|pixtral|llava|gemma-3)/i.test(id)) : ids };
   }
   if (name === 'cerebras') {
     const d = await getJson('https://api.cerebras.ai/v1/models', bearer);
@@ -116,7 +116,7 @@ async function discover(name, p, vision) {
       .filter((m) => Number(m.pricing?.prompt) === 0 && Number(m.pricing?.completion) === 0 && !/(router|\/auto)/.test(m.id))
       .filter((m) => (m.architecture?.output_modalities || ['text']).includes('text') && !/(image-preview|image-generation)/.test(m.id))
       .filter((m) => !vision || (m.architecture?.input_modalities || []).includes('image'))
-      .sort((a, b) => (b.context_length || 0) - (a.context_length || 0))
+      .sort((a, b) => famRank(b.id) - famRank(a.id) || (b.context_length || 0) - (a.context_length || 0))
       .map((m) => m.id);
     return { ids, authoritative: true };
   }
@@ -127,6 +127,13 @@ async function discover(name, p, vision) {
   }
   return { ids: [] };
 }
+
+const famRank = (id) => (/(gemma|llama|mistral|qwen|pixtral|nemotron|glm|phi)/i.test(id) ? 1 : 0);
+
+// models that returned 'not found / not allowed' are skipped for a while
+const badModels = new Map();
+const markBad = (name, model, mins) => badModels.set(`${name}:${model}`, Date.now() + mins * 60000);
+const isBad = (name, model) => (badModels.get(`${name}:${model}`) || 0) > Date.now();
 
 const modelCache = new Map();
 async function modelsFor(name, vision) {
@@ -148,7 +155,7 @@ async function modelsFor(name, vision) {
   } else {
     models = list(p.override, base);
   }
-  return models;
+  return models.filter((m) => !isBad(name, m));
 }
 
 function parseJson(text) {
@@ -165,16 +172,22 @@ async function readJson(r) {
 
 async function callGemini(p, model, { system, text, images, maxTokens }) {
   const parts = [...images.map((data) => ({ inline_data: { mime_type: 'image/jpeg', data } })), { text }];
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const send = (noThinking) => fetch(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': p.key },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts }],
-      generationConfig: { maxOutputTokens: Math.max(maxTokens, 8000), responseMimeType: 'application/json', temperature: 0.6 },
+      generationConfig: {
+        maxOutputTokens: Math.max(maxTokens, 8000), responseMimeType: 'application/json', temperature: 0.6,
+        ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+      },
     }),
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(60000),
   });
+  let r = await send(true);
+  if (r.status === 400) r = await send(false); // this model may not allow turning thinking off
   const d = await readJson(r);
   return (d.candidates?.[0]?.content?.parts || []).map((x) => x.text || '').join('');
 }
@@ -186,18 +199,30 @@ async function callOpenAICompat(p, model, { system, text, images, maxTokens }) {
     : text;
   const r = await fetch(p.url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${p.key}` },
+    headers: {
+      'content-type': 'application/json', authorization: `Bearer ${p.key}`,
+      ...(p.github ? { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' } : {}),
+    },
     body: JSON.stringify({
-      model, max_tokens: maxTokens, temperature: 0.6,
+      model, max_tokens: Math.max(maxTokens, 5000), temperature: 0.6,
       messages: [{ role: 'system', content: system }, { role: 'user', content }],
     }),
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(60000),
   });
   const d = await readJson(r);
   return d.choices?.[0]?.message?.content || '';
 }
 
 const callProvider = (p, model, args) => (p.type === 'gemini' ? callGemini(p, model, args) : callOpenAICompat(p, model, args));
+async function callWithRetry(p, model, args) {
+  for (let i = 0; ; i++) {
+    try { return await callProvider(p, model, args); }
+    catch (err) {
+      if (i < 2 && [500, 502, 503, 504].includes(err.status)) { await new Promise((r) => setTimeout(r, 1500 * (i + 1))); continue; }
+      throw err;
+    }
+  }
+}
 
 async function askAI({ system, text, images = [], maxTokens = 3500 }) {
   const wantsVision = images.length > 0;
@@ -208,12 +233,14 @@ async function askAI({ system, text, images = [], maxTokens = 3500 }) {
     throw e;
   }
   const failures = [];
-  for (const name of names) {
+  const startedAt = Date.now();
+  outer: for (const name of names) {
     const p = PROVIDERS[name];
     const models = (await modelsFor(name, wantsVision)).slice(0, 4);
     for (const model of models) {
+      if (Date.now() - startedAt > 85000) { failures.push('Stopped: taking too long'); break outer; }
       try {
-        const raw = await callProvider(p, model, { system, text, images, maxTokens });
+        const raw = await callWithRetry(p, model, { system, text, images, maxTokens });
         const out = parseJson(raw);
         out._provider = `${name}:${model}`;
         console.log(`AI ok via ${name} (${model})`);
@@ -222,7 +249,8 @@ async function askAI({ system, text, images = [], maxTokens = 3500 }) {
         const msg = redact(err.message);
         failures.push(`${name} (${model}): ${msg}`);
         console.error(`AI ${name} (${model}) failed: ${msg}`);
-        if ([401, 403, 429].includes(err.status) || err.name === 'TimeoutError') break; // key/quota problem: skip this provider
+        if (err.status === 404 || (name === 'openrouter' && [400, 403, 404].includes(err.status))) markBad(name, model, 60);
+        if (err.status === 401 || err.status === 429 || (err.status === 403 && name !== 'openrouter')) break; // key or quota problem: skip this provider
       }
     }
   }
@@ -254,6 +282,8 @@ app.get('/api/diagnose', async (req, res) => {
   res.json(out);
 });
 
+const INDIAN_ENGLISH = `LANGUAGE: Write everything in simple, warm Indian English, the way a friendly home cook in India would explain to a family member. Short, clear sentences. Use Indian kitchen words naturally: kadhai, tawa, pressure cooker, tadka, katori, masala, "on low / medium / high flame", "till the raw smell goes", "till it turns golden brown", "till the oil leaves the sides". Use Indian vocabulary: coriander (not cilantro), curd (not yogurt), brinjal, capsicum, ladies finger, maida, jaggery, ghee, haldi/turmeric. Metric measures (grams, ml) and spoons (tsp, tbsp); say "a pinch" or "a handful" where natural. Never use American terms like stovetop, skillet, broil, zucchini, bell pepper, eggplant, scallion.`;
+
 const dietLine = (diet) => (Array.isArray(diet) && diet.length ? `Dietary requirements (strict): ${diet.join(', ')}.` : 'No dietary restrictions.');
 
 // ---- 1) Look at photos / ingredient list and suggest dishes ----
@@ -273,9 +303,11 @@ Rules:
 - Suggest 6 dishes, best matches first. Prefer dishes that use mostly what is available (aim for at most 2 missing items per dish).
 - Obey dietary requirements strictly. Respect the cuisine and time limit if given.
 - If the photos contain no food, return an empty ingredients list, no dishes, and explain in "note".
+${INDIAN_ENGLISH}
+Dish names: use the commonly known name (e.g. "Aloo Gobi", "Poha").
 Return ONLY valid JSON, no markdown, in this exact shape:
 {"ingredients":[{"name":"string"}],
- "dishes":[{"id":"short-slug","name":"string","emoji":"one emoji","cuisine":"string","description":"one appetising sentence","time_minutes":number,"difficulty":"Easy|Medium|Hard","uses":["ingredient names from the list"],"missing":["items not available"],"match_percent":number}],
+ "dishes":[{"id":"short-slug","name":"string","emoji":"one emoji","photo_search":"simple Wikipedia-style title of the dish, e.g. Poha","cuisine":"string","description":"one appetising sentence in Indian English","time_minutes":number,"difficulty":"Easy|Medium|Hard","uses":["ingredient names from the list"],"missing":["items not available"],"match_percent":number}],
  "note":"optional short message for the user or empty string"}`;
 
     const text = `${dietLine(diet)}
@@ -300,20 +332,21 @@ app.post('/api/recipe', guard, async (req, res) => {
     const { dish, ingredients = [], diet = [], servings = 2 } = req.body || {};
     if (!dish || typeof dish !== 'string') return res.status(400).json({ error: 'Pick a dish first.' });
 
-    const system = `You are a patient cooking teacher writing a recipe for a home cook. Give clear, complete, beginner-friendly steps with sensible quantities for the requested servings, heat levels, and visual/aroma cues for doneness.
+    const system = `You are a patient, friendly cooking teacher writing a recipe for a home cook in India. Give clear, complete, beginner-friendly steps with sensible quantities for the requested servings. Say exactly which flame to use and what the person should see, smell or hear when a step is done.
+${INDIAN_ENGLISH}
 Return ONLY valid JSON, no markdown, in this exact shape:
-{"name":"string","emoji":"one emoji","servings":number,"total_time_minutes":number,"difficulty":"Easy|Medium|Hard",
- "ingredients":[{"item":"string","amount":"string like 2 tbsp","have":true|false}],
- "steps":[{"title":"short title","instruction":"2-4 clear sentences","timer_minutes":number or null,"tip":"optional short tip or empty string"}],
+{"name":"string","emoji":"one emoji","photo_search":"simple Wikipedia-style dish title","summary":"one friendly sentence","servings":number,"total_time_minutes":number,"difficulty":"Easy|Medium|Hard",
+ "ingredients":[{"item":"short plain name like onion","amount":"string like 2 medium or 1 tsp","have":true|false}],
+ "steps":[{"title":"short title (3-5 words)","action":"prep|chop|heat|temper|saute|fry|boil|simmer|pressure|mix|grind|knead|steam|roast|rest|serve","instruction":"2-3 short, clear sentences","flame":"off|low|medium|high","timer_minutes":number or null,"uses":[{"item":"short plain name like onion","amount":"how much to add in this step, with how it is cut"}],"cue":"what to look, smell or listen for, short","tip":"optional short tip or empty string"}],
  "tips":["1-3 short general tips, e.g. storage or swaps"]}
-"have" is true when the item is in the person's available ingredients or is a basic staple (salt, pepper, oil, water, sugar). Put prep (washing, chopping) in the first steps. Use timer_minutes only for steps with real waiting/cooking time.`;
+Rules: "have" is true when the item is in the person's available ingredients or a basic staple (salt, pepper, oil, water, sugar). Put washing and chopping in the first step(s). Each step "uses" lists only ingredients added in that step (empty list if none); use the same item names as in "ingredients". Use timer_minutes only for steps with real waiting or cooking time. Keep 6 to 10 steps.`;
 
     const text = `Dish: ${dish}
 Servings: ${servings}
 ${dietLine(diet)}
 Available ingredients: ${ingredients.length ? ingredients.join(', ') : 'unknown'}`;
 
-    const out = await askAI({ system, text, maxTokens: 4000 });
+    const out = await askAI({ system, text, maxTokens: 5000 });
     res.json(out);
   } catch (err) {
     console.error(err);
