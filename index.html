@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2E6B47">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>PantryChef – cook with what you have</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,124 +12,195 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EEF3EA; --paper:#fff; --ink:#12261B; --muted:#5B6F61; --line:#CBD8C6;
-  --leaf:#2E6B47; --leaf-dark:#1F4D32; --lemon:#F5C83B; --radish:#D1435B; --mint:#DCEBD7;
+  --bg:#EEF3EA; --paper:#fff; --ink:#12261B; --muted:#5B6F61; --line:#D3DECE;
+  --leaf:#2E6B47; --lemon:#F5C83B; --radish:#D1435B; --mint:#DCEBD7;
+  --shadow:0 8px 28px rgba(18,38,27,.10);
   --display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
   --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
-*{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:70px}
+body{margin:0;background:radial-gradient(1200px 400px at 50% -120px,#fff7d6 0,transparent 70%),var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
 button,select,textarea,input{font:inherit;color:inherit}
-button{cursor:pointer}
+button{cursor:pointer;touch-action:manipulation}
 :focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
-.wrap{max-width:780px;margin:0 auto;padding:0 18px 80px}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 150px}
+.hidden{display:none!important}
 
 /* header */
-header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
-.logo{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;display:flex;gap:8px;align-items:center}
-.logo span{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--lemon);font-size:1.1rem}
-nav{display:flex;gap:4px;background:var(--mint);padding:4px;border-radius:999px}
-nav button{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:700;color:var(--muted)}
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;margin:0 -16px;background:rgba(238,243,234,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.logo{font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;display:flex;gap:8px;align-items:center}
+.logo span{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:var(--lemon);font-size:1.1rem;transform:rotate(-6deg)}
+nav{display:flex;gap:2px;background:#fff;padding:3px;border-radius:999px;box-shadow:0 1px 0 var(--line)}
+nav button{border:0;background:none;padding:8px 15px;border-radius:999px;font-weight:700;color:var(--muted);font-size:.95rem}
 nav button[aria-pressed="true"]{background:var(--ink);color:#fff}
 
-h1{font-family:var(--display);font-weight:800;font-size:clamp(2.1rem,6.5vw,3.3rem);line-height:1.02;letter-spacing:-.03em;margin:26px 0 10px;max-width:14ch}
-.lead{color:var(--muted);font-size:1.1rem;margin:0 0 24px;max-width:46ch}
-h2{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin:34px 0 12px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,8vw,3.1rem);line-height:1.02;letter-spacing:-.03em;margin:18px 0 8px}
+.lead{color:var(--muted);font-size:1.05rem;margin:0 0 18px;max-width:44ch}
+h2{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;margin:28px 0 12px}
 
-/* drop zone */
-.drop{display:block;border:2px dashed var(--leaf);border-radius:22px;background:var(--paper);padding:26px 18px;text-align:center;transition:background .15s,border-color .15s}
+/* upload */
+.drop{display:block;border:2px dashed var(--leaf);border-radius:26px;background:rgba(255,255,255,.75);padding:18px;text-align:center;transition:.15s}
 .drop.over{background:var(--mint);border-style:solid}
-.drop strong{font-family:var(--display);font-size:1.25rem;display:block}
-.drop p{margin:4px 0 14px;color:var(--muted)}
-.drop-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{border:0;border-radius:12px;padding:11px 18px;font-weight:700;background:var(--ink);color:#fff;display:inline-flex;align-items:center;gap:8px}
+.drop strong{font-family:var(--display);font-size:1.2rem;display:block}
+.drop p{margin:2px 0 14px;color:var(--muted);font-size:.95rem}
+@media (hover:none){.drop .desk{display:none}}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:14px;padding:13px 18px;font-weight:700;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px}
 .btn.ghost{background:var(--mint);color:var(--ink)}
 .btn.lemon{background:var(--lemon);color:var(--ink)}
-.btn.big{width:100%;justify-content:center;padding:16px;font-size:1.1rem;border-radius:14px;margin-top:18px}
-.btn[disabled]{opacity:.55;cursor:not-allowed}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:16px}
-.thumb{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--mint);border:3px solid #fff;box-shadow:0 2px 0 var(--line)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.5}
+.thumbs{display:flex;gap:10px;overflow-x:auto;margin-top:14px;padding:4px 2px 8px;scroll-snap-type:x proximity}
+.thumbs:empty{display:none}
+.thumb{position:relative;flex:none;width:92px;height:92px;border-radius:16px;overflow:hidden;border:3px solid #fff;box-shadow:var(--shadow);scroll-snap-align:start}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(18,38,27,.85);color:#fff;font-size:15px;line-height:1}
 
-/* options */
-.panel{background:var(--paper);border-radius:18px;padding:18px;margin-top:16px;border:1px solid var(--line)}
-label.field{display:block;font-weight:700;margin-bottom:6px}
-textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdf9;resize:vertical;min-height:70px}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:16px}
-select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fbfdf9}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--line);background:#fbfdf9;padding:7px 14px;border-radius:999px;font-weight:500}
+.panel{background:var(--paper);border-radius:22px;padding:16px;margin-top:14px;box-shadow:var(--shadow)}
+label.field{display:block;font-weight:700;margin-bottom:6px;font-size:.95rem}
+textarea{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:#fbfdf9;resize:vertical;min-height:64px;font-size:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.row .full{grid-column:1/-1}
+select,.add-ing input{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:#fbfdf9;font-size:16px;min-height:48px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin:0 -16px;padding-inline:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--line);background:#fbfdf9;padding:9px 15px;border-radius:999px;font-weight:500;min-height:42px}
 .chip[aria-pressed="true"]{background:var(--leaf);border-color:var(--leaf);color:#fff}
 .stepper{display:flex;align-items:center;gap:6px}
-.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fbfdf9;font-size:1.2rem;font-weight:700}
-.stepper output{min-width:36px;text-align:center;font-weight:700;font-size:1.1rem}
+.stepper button{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--line);background:#fbfdf9;font-size:1.3rem;font-weight:700}
+.stepper output{min-width:38px;text-align:center;font-weight:700;font-size:1.2rem}
 
-/* ingredients found */
-.found{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cta{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:22px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 62%,rgba(238,243,234,0))}
+.cta .btn{max-width:820px;margin:0 auto;display:flex;font-size:1.1rem;min-height:56px;border-radius:18px;box-shadow:0 8px 20px rgba(245,200,59,.45)}
+
+/* found + dishes */
+.found{display:flex;flex-wrap:wrap;gap:8px}
 .ing{display:inline-flex;gap:6px;align-items:center;background:var(--mint);padding:6px 6px 6px 13px;border-radius:999px;font-weight:500}
-.ing button{border:0;background:var(--paper);width:22px;height:22px;border-radius:50%;line-height:1;color:var(--muted)}
+.ing button{border:0;background:#fff;width:24px;height:24px;border-radius:50%;line-height:1;color:var(--muted)}
 .add-ing{display:flex;gap:8px;margin-top:12px}
-.add-ing input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbfdf9;min-width:0}
-
-/* dishes */
-.dishes{display:grid;gap:14px}
-.dish{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;grid-template-columns:56px 1fr;gap:4px 14px}
-.dish .emo{grid-row:span 2;font-size:2.4rem;width:56px;height:56px;display:grid;place-items:center;background:var(--mint);border-radius:16px}
-.dish h3{margin:0;font-family:var(--display);font-size:1.25rem;letter-spacing:-.01em;line-height:1.2}
-.dish .meta{color:var(--muted);font-size:.92rem}
-.dish .desc{grid-column:1/-1;margin:8px 0 0}
-.match{grid-column:1/-1;margin-top:10px}
-.bar{height:8px;border-radius:99px;background:var(--mint);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--leaf);border-radius:99px}
-.matchtxt{display:flex;justify-content:space-between;font-size:.88rem;color:var(--muted);margin-top:5px}
-.miss{grid-column:1/-1;margin-top:8px;font-size:.92rem}
+.add-ing input{flex:1;min-width:0}
+.dishes{display:grid;gap:16px}
+@media (min-width:700px){.dishes{grid-template-columns:1fr 1fr}}
+.dish{background:var(--paper);border-radius:24px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.ph{position:relative;background:linear-gradient(135deg,#DCEBD7,#F6EBB8) center/cover no-repeat;display:grid;place-items:center}
+.ph .fb{font-size:3.2rem;transition:opacity .3s}
+.ph.has .fb{opacity:0}
+.dimg{aspect-ratio:16/10}
+.badges{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+.badges span{background:rgba(18,38,27,.82);color:#fff;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:999px;backdrop-filter:blur(4px)}
+.dbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.dbody h3{margin:0;font-family:var(--display);font-size:1.3rem;letter-spacing:-.01em;line-height:1.15}
+.dbody .cu{color:var(--muted);font-size:.88rem}
+.dbody p{margin:0}
+.bar{height:8px;border-radius:99px;background:var(--mint);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--leaf),#59a373);border-radius:99px}
+.matchtxt{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;color:var(--muted)}
+.miss{font-size:.92rem}
 .miss b{color:var(--radish)}
-.dish-actions{grid-column:1/-1;display:flex;gap:10px;margin-top:12px}
-.dish-actions .btn{flex:1;justify-content:center}
-.heart{flex:0 0 auto!important;width:48px;padding:0!important}
-
-.notice{background:#FFF6D6;border:1px solid var(--lemon);padding:12px 14px;border-radius:12px;margin-top:14px}
-.error{white-space:pre-wrap;word-break:break-word;font-size:.92rem;background:#FBE4E8;border:1px solid var(--radish);padding:12px 14px;border-radius:12px;margin-top:14px;color:#7a1f31}
+.dbody .btn{margin-top:auto}
+.notice{background:#FFF6D6;border:1px solid var(--lemon);padding:12px 14px;border-radius:14px;margin-top:14px}
+.error{white-space:pre-wrap;word-break:break-word;font-size:.9rem;background:#FBE4E8;border:1px solid var(--radish);padding:12px 14px;border-radius:14px;margin-top:14px;color:#7a1f31}
 .empty{padding:34px 10px;text-align:center;color:var(--muted)}
-.loading{display:flex;gap:14px;align-items:center;padding:24px 4px;color:var(--muted);font-weight:500}
-.spin{width:26px;height:26px;border-radius:50%;border:4px solid var(--mint);border-top-color:var(--leaf);animation:spin 0.9s linear infinite;flex:none}
+.loading{display:flex;gap:14px;align-items:center;padding:20px 4px;color:var(--muted);font-weight:500}
+.spin{width:26px;height:26px;border-radius:50%;border:4px solid var(--mint);border-top-color:var(--leaf);animation:spin .9s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
-.hidden{display:none!important}
+.sk{background:linear-gradient(100deg,#e4ecdf 30%,#f4f8f1 50%,#e4ecdf 70%) 0 0/200% 100%;animation:sh 1.3s linear infinite;border-radius:24px;height:230px}
+@keyframes sh{to{background-position:-200% 0}}
+.skgrid{display:grid;gap:16px;margin-top:6px}
+
+/* toast + loader */
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;z-index:80;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;font-weight:500}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{position:fixed;inset:0;background:rgba(238,243,234,.94);z-index:70;display:grid;place-content:center;text-align:center;gap:14px;padding:24px}
+.overlay .big{font-size:3.4rem;animation:bob 1.2s ease-in-out infinite}
+.overlay p{margin:0;font-family:var(--display);font-weight:800;font-size:1.3rem}
 
 /* cooking mode */
-.cook{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;
-  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
-.cook-top{display:flex;align-items:center;gap:12px;padding:12px 16px}
-.cook-top h2{margin:0;font-size:1.15rem;flex:1;line-height:1.15}
-.x{border:0;background:var(--ink);color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.2rem}
-.tabs{display:flex;gap:4px;margin:0 16px;background:var(--mint);padding:4px;border-radius:12px}
-.tabs button{flex:1;border:0;background:none;border-radius:9px;padding:9px;font-weight:700;color:var(--muted)}
-.tabs button[aria-pressed="true"]{background:var(--paper);color:var(--ink)}
-.prog{height:6px;background:var(--mint);margin:14px 16px 0;border-radius:99px;overflow:hidden}
-.prog i{display:block;height:100%;background:var(--lemon);transition:width .25s}
-.cook-body{flex:1;overflow:auto;padding:18px 16px}
-.cook-inner{max-width:680px;margin:0 auto}
-.stepnum{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--lemon);font-family:var(--display);font-weight:800;font-size:1.2rem}
-.step-title{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,5vw,2.2rem);letter-spacing:-.02em;line-height:1.1;margin:12px 0}
-.step-text{font-size:1.2rem;line-height:1.6;max-width:56ch}
-.tip{background:#FFF6D6;border-left:5px solid var(--lemon);padding:10px 14px;border-radius:8px;margin-top:18px}
-.timer{margin-top:20px;display:flex;align-items:center;gap:14px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px}
-.timer .t{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:-.02em;min-width:5.2ch}
-.timer.done{border-color:var(--radish);background:#FBE4E8}
-.cook-nav{display:flex;gap:10px;padding:12px 16px 16px;border-top:1px solid var(--line);background:var(--paper)}
-.cook-nav .btn{flex:1;justify-content:center;padding:15px}
-.cl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.cl label{display:flex;gap:12px;align-items:center;background:var(--paper);border:1px solid var(--line);padding:12px 14px;border-radius:12px;cursor:pointer}
-.cl input{width:22px;height:22px;accent-color:var(--leaf)}
-.cl .amt{color:var(--muted);margin-left:auto;text-align:right}
-.cl .need{color:var(--radish);font-size:.85rem;font-weight:700}
-.cl input:checked + span{text-decoration:line-through;color:var(--muted)}
-.finish{text-align:center;padding:30px 0}
-.finish .big-emo{font-size:4rem}
+.cook{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.cook.show{transform:none}
+.ctop{display:flex;align-items:center;gap:8px;padding:10px 12px 8px}
+.ctitle{flex:1;min-width:0}
+.ctitle b{display:block;font-family:var(--display);font-size:1.05rem;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctitle small{color:var(--muted)}
+.ib{width:44px;height:44px;border-radius:50%;border:0;background:#fff;box-shadow:0 1px 0 var(--line);font-size:1.15rem;display:grid;place-items:center;flex:none}
+.ib.on{background:var(--lemon)}
+.ib.dark{background:var(--ink);color:#fff}
+.segs{display:flex;gap:4px;padding:2px 14px 8px}
+.seg{flex:1;height:8px;border:0;padding:0;border-radius:99px;background:var(--line)}
+.seg.done{background:var(--leaf)}
+.seg.now{background:var(--lemon);box-shadow:0 0 0 2px var(--ink) inset}
+.pills{display:flex;gap:8px;padding:0 14px;overflow-x:auto}
+.pills:empty{display:none}
+.pill{flex:none;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:7px 14px;font-weight:700;font-size:.9rem;margin-bottom:6px}
+.pill.done{background:var(--radish);animation:bob .6s ease-in-out infinite}
+.cbody{flex:1;overflow-y:auto;padding:8px 16px 24px;overscroll-behavior:contain}
+.cinner{max-width:640px;margin:0 auto}
+.cnav{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid var(--line)}
+.cnav .btn{min-height:56px;font-size:1.05rem;border-radius:16px}
+.cnav .btn.ghost{flex:1}
+.cnav .btn.lemon{flex:2}
+
+.visual{position:relative;border-radius:26px;padding:26px 16px;min-height:170px;display:grid;place-items:center;overflow:hidden;background:var(--vc,#DCEBD7)}
+.vemo{font-size:4.6rem;line-height:1;display:inline-block;position:relative;z-index:1}
+.flame{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.85);border-radius:999px;padding:5px 11px;font-size:.82rem;font-weight:700;display:flex;gap:2px;align-items:center}
+.flame i{font-style:normal;opacity:.2;filter:grayscale(1)}
+.flame i.on{opacity:1;filter:none}
+.puff{position:absolute;bottom:20px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.75);opacity:0;animation:rise 2.4s ease-in infinite}
+.puff:nth-child(2){left:42%;animation-delay:.6s}.puff:nth-child(3){left:58%;animation-delay:1.2s}.puff:nth-child(4){left:50%;animation-delay:1.8s}
+@keyframes rise{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:.9}100%{transform:translateY(-110px) scale(1.5);opacity:0}}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes chop{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(22deg) translateY(6px)}}
+@keyframes stir{0%{transform:rotate(-14deg) translateX(-8px)}50%{transform:rotate(14deg) translateX(8px)}100%{transform:rotate(-14deg) translateX(-8px)}}
+@keyframes sizzle{0%,100%{transform:translate(0)}20%{transform:translate(-3px,2px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,-2px)}80%{transform:translate(2px,2px)}}
+@keyframes spin2{to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.a-bob .vemo{animation:bob 1.8s ease-in-out infinite}
+.a-chop .vemo{animation:chop .7s ease-in-out infinite;transform-origin:70% 90%}
+.a-stir .vemo{animation:stir 1.2s ease-in-out infinite}
+.a-sizzle .vemo,.a-shake .vemo{animation:sizzle .5s linear infinite}
+.a-spin .vemo{animation:spin2 1.6s linear infinite}
+.a-pop .vemo{animation:pop .6s ease-out both}
+@media (prefers-reduced-motion:reduce){.vemo,.puff,.pill.done,.overlay .big{animation:none!important}}
+
+.stitle{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,6vw,2.1rem);letter-spacing:-.02em;line-height:1.1;margin:16px 0 8px}
+.stext{font-size:1.18rem;line-height:1.6;margin:0}
+.lbl{font-weight:700;margin:20px 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lbl small{color:var(--muted);font-weight:500}
+.ichips{display:grid;gap:8px}
+.ichip{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:18px;padding:8px 12px 8px 8px;transition:.15s}
+.ichip .itxt{display:flex;flex-direction:column;min-width:0}
+.ichip .itxt small{color:var(--muted)}
+.ithumb{width:52px;height:52px;border-radius:14px;background:var(--mint) center/cover no-repeat;display:grid;place-items:center;font-size:1.6rem;flex:none}
+.ithumb.has .fb{display:none}
+.tick{margin-left:auto;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.ichip.on{border-color:var(--leaf);background:#F1F8EE}
+.ichip.on .tick{background:var(--leaf);border-color:var(--leaf)}
+.ichip .need{color:var(--radish);font-size:.78rem;font-weight:700}
+.cue{margin-top:16px;background:#fff;border-radius:16px;padding:12px 14px;border-left:6px solid var(--leaf)}
+.tip{margin-top:12px;background:#FFF6D6;border-left:6px solid var(--lemon);padding:11px 14px;border-radius:14px}
+.timer{position:relative;width:156px;margin:22px auto 8px}
+.ring{width:156px;height:156px;transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:9}
+.ring .bg{stroke:var(--mint)}
+.ring .fg{stroke:var(--leaf);stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.timer.done .fg{stroke:var(--radish)}
+.tmid{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.tmid .t{font-family:var(--display);font-weight:800;font-size:2.1rem;letter-spacing:-.02em;line-height:1}
+.tmid small{color:var(--muted)}
+.tbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+.hero{border-radius:26px;aspect-ratio:16/10;overflow:hidden}
+.hero .fb{font-size:4.5rem}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.meta span{background:#fff;border-radius:999px;padding:6px 13px;font-weight:700;font-size:.9rem;box-shadow:0 1px 0 var(--line)}
+.finish{text-align:center;position:relative}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:55}
+.confetti span{position:absolute;top:-30px;font-size:1.6rem;animation:fall 3.2s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+.tipsbox{text-align:left;margin-top:14px}
 </style>
 </head>
 <body>
@@ -143,14 +215,14 @@ select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;b
 
   <main id="viewCook">
     <h1>What’s in your kitchen?</h1>
-    <p class="lead">Add photos of your fridge, shelf or groceries. You’ll get dishes you can cook now, with every step.</p>
+    <p class="lead">Click photos of your fridge or groceries. Get dishes you can make right now, with easy step-by-step help.</p>
 
     <label class="drop" id="drop" for="fileInput">
-      <strong>Paste, drop or choose photos</strong>
-      <p>Press Ctrl+V (⌘+V on Mac) anywhere on this page to paste a screenshot or copied image.</p>
-      <div class="drop-actions">
-        <button type="button" class="btn" id="btnChoose">Choose photos</button>
-        <button type="button" class="btn ghost" id="btnCamera">Take a photo</button>
+      <strong>Add photos of your ingredients</strong>
+      <p><span class="desk">Paste with Ctrl+V, drag and drop, or </span>choose from below.</p>
+      <div class="pick">
+        <button type="button" class="btn" id="btnCamera">📷 Take photo</button>
+        <button type="button" class="btn ghost" id="btnChoose">🖼️ From gallery</button>
       </div>
       <div class="thumbs" id="thumbs"></div>
     </label>
@@ -158,9 +230,8 @@ select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;b
     <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
 
     <div class="panel">
-      <label class="field" for="notes">Anything else you have, or want to avoid?</label>
+      <label class="field" for="notes">Anything else at home? Or something to avoid?</label>
       <textarea id="notes" placeholder="e.g. rice, eggs, curry leaves. No mushrooms please."></textarea>
-
       <div class="row">
         <div>
           <label class="field">Servings</label>
@@ -171,28 +242,26 @@ select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;b
           </div>
         </div>
         <div>
-          <label class="field" for="maxTime">Time available</label>
+          <label class="field" for="maxTime">Time you have</label>
           <select id="maxTime">
             <option value="0">Any</option><option value="15">Up to 15 min</option>
             <option value="30">Up to 30 min</option><option value="45">Up to 45 min</option>
             <option value="60">Up to 1 hour</option>
           </select>
         </div>
-        <div>
+        <div class="full">
           <label class="field" for="cuisine">Cuisine</label>
           <select id="cuisine">
-            <option value="any">Surprise me</option><option>Indian</option><option>South Indian</option>
-            <option>Arabic / Middle Eastern</option><option>Italian</option><option>Asian</option>
-            <option>Mexican</option><option>Continental</option>
+            <option value="any">Surprise me</option><option selected>Indian</option><option>South Indian</option>
+            <option>North Indian</option><option>Arabic / Middle Eastern</option><option>Italian</option>
+            <option>Asian</option><option>Mexican</option><option>Continental</option>
           </select>
         </div>
       </div>
-
       <label class="field" style="margin-top:16px">Diet</label>
       <div class="chips" id="diet"></div>
     </div>
 
-    <button class="btn lemon big" id="go">Find dishes</button>
     <div id="msg"></div>
 
     <section id="results" class="hidden">
@@ -200,10 +269,10 @@ select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;b
       <div class="panel" style="margin-top:0">
         <div class="found" id="found"></div>
         <form class="add-ing" id="addForm">
-          <input id="addInput" placeholder="Add or fix an ingredient" aria-label="Add an ingredient">
+          <input id="addInput" placeholder="Add or correct an ingredient" aria-label="Add an ingredient">
           <button class="btn ghost" type="submit">Add</button>
         </form>
-        <button class="btn" id="refresh" style="margin-top:12px">Update dishes</button>
+        <button class="btn block" id="refresh" style="margin-top:12px">Update dishes</button>
       </div>
       <h2>Dishes you can make</h2>
       <div class="dishes" id="dishes"></div>
@@ -212,12 +281,15 @@ select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;b
 
   <main id="viewSaved" class="hidden">
     <h1>Saved recipes</h1>
-    <p class="lead">Recipes you saved open instantly, even without a new search.</p>
+    <p class="lead">Your saved recipes open instantly, even without a new search.</p>
     <div class="dishes" id="savedList"></div>
   </main>
 </div>
 
+<div class="cta" id="cta"><button class="btn lemon block" id="go">Find dishes</button></div>
 <div class="cook hidden" id="cook" role="dialog" aria-modal="true" aria-label="Cooking mode"></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="overlay hidden" id="loader"><div class="big">🍳</div><p id="loaderTxt">Writing your recipe…</p></div>
 
 <script>
 const $ = (s) => document.querySelector(s);
@@ -226,18 +298,55 @@ const store = {
   get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+const buzz = (n = 12) => { try { navigator.vibrate?.(n); } catch {} };
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
 
 const state = {
-  images: [],            // base64 jpeg (no prefix) + preview url
-  ingredients: [],       // confirmed list of names
-  dishes: [],
-  diet: new Set(store.get('pc_diet', [])),
-  servings: store.get('pc_servings', 2),
-  saved: store.get('pc_saved', []),
-  pw: store.get('pc_pw', ''),
-  cook: null,
+  images: [], ingredients: [], dishes: [],
+  diet: new Set(store.get('pc_diet', [])), servings: store.get('pc_servings', 2),
+  saved: store.get('pc_saved', []), pw: store.get('pc_pw', ''), cook: null,
 };
 const DIETS = ['Vegetarian','Vegan','Eggless','Gluten-free','Dairy-free','Halal','High-protein'];
+
+/* ---------- food photos from Wikipedia (free, no key) ---------- */
+const imgCache = store.get('pc_img', {});
+const inflight = new Map();
+function wikiImg(q) {
+  q = (q || '').trim().toLowerCase();
+  if (!q) return Promise.resolve('');
+  if (q in imgCache) return Promise.resolve(imgCache[q]);
+  if (inflight.has(q)) return inflight.get(q);
+  const p = (async () => {
+    try {
+      const u = 'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=4&prop=pageimages&piprop=thumbnail&pithumbsize=640&gsrsearch=' + encodeURIComponent(q);
+      const d = await (await fetch(u)).json();
+      const pages = Object.values(d.query?.pages || {}).sort((a, b) => a.index - b.index);
+      const url = pages.find((x) => x.thumbnail?.source)?.thumbnail.source || '';
+      imgCache[q] = url; store.set('pc_img', imgCache);
+      return url;
+    } catch { return ''; }
+  })();
+  inflight.set(q, p);
+  return p;
+}
+const NO_PHOTO = /^(salt|oil|cooking oil|water|sugar|ghee|butter|pepper|black pepper)$/i;
+function hydrate(root = document) {
+  root.querySelectorAll('[data-img]:not([data-d])').forEach(async (el) => {
+    el.dataset.d = '1';
+    const q = el.dataset.img; if (!q || NO_PHOTO.test(q.trim())) return;
+    const url = await wikiImg(q); if (!url) return;
+    const im = new Image();
+    im.onload = () => { if (el.isConnected) { el.style.backgroundImage = `url("${url.replace(/"/g, '%22')}")`; el.classList.add('has'); } };
+    im.src = url;
+  });
+}
+const EMOJI = [[/onion/i,'🧅'],[/tomato|tamato/i,'🍅'],[/garlic/i,'🧄'],[/ginger/i,'🫚'],[/potato|aloo/i,'🥔'],[/chill?i|mirch|pepper/i,'🌶️'],
+  [/coriander|cilantro|mint|curry leaf|leaves|herb/i,'🌿'],[/salt/i,'🧂'],[/oil/i,'🫒'],[/ghee|butter/i,'🧈'],[/water/i,'💧'],[/rice|poha|oats/i,'🍚'],
+  [/egg/i,'🥚'],[/milk|curd|yogh?urt/i,'🥛'],[/lemon|lime/i,'🍋'],[/carrot/i,'🥕'],[/pea/i,'🟢'],[/capsicum/i,'🫑'],[/corn/i,'🌽'],[/brinjal|eggplant/i,'🍆'],
+  [/cauliflower|gobi|broccoli/i,'🥦'],[/spinach|palak|greens/i,'🥬'],[/paneer|cheese/i,'🧀'],[/bread|roti|chapati/i,'🍞'],[/dal|lentil|soya|soy|beans|chana|rajma/i,'🫘'],
+  [/mushroom/i,'🍄'],[/coconut/i,'🥥'],[/turmeric|haldi/i,'🟡'],[/sugar|jaggery/i,'🍬'],[/chicken|meat|mutton|fish/i,'🍗']];
+const emojiFor = (t) => { for (const [re, e] of EMOJI) if (re.test(t || '')) return e; return '🥣'; };
 
 /* ---------- API ---------- */
 async function api(path, body) {
@@ -256,25 +365,20 @@ async function api(path, body) {
 /* ---------- Photos ---------- */
 function resizeToJpeg(file, max = 1280) {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
+    const url = URL.createObjectURL(file); const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      const sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      const dataUrl = c.toDataURL('image/jpeg', 0.82);
-      URL.revokeObjectURL(url);
-      resolve({ data: dataUrl.split(',')[1], preview: dataUrl });
+      const d = c.toDataURL('image/jpeg', 0.82); URL.revokeObjectURL(url);
+      resolve({ data: d.split(',')[1], preview: d });
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('That file could not be read as an image.')); };
     img.src = url;
   });
 }
 async function addFiles(files) {
-  const list = [...files].filter((f) => f.type.startsWith('image/'));
-  if (!list.length) return;
-  for (const f of list) {
+  for (const f of [...files].filter((f) => f.type.startsWith('image/'))) {
     if (state.images.length >= 6) { showMsg('You can add up to 6 photos at a time.', 'notice'); break; }
     try { state.images.push(await resizeToJpeg(f)); } catch (e) { showMsg(e.message, 'error'); }
   }
@@ -284,14 +388,10 @@ function renderThumbs() {
   $('#thumbs').innerHTML = state.images.map((im, i) =>
     `<div class="thumb"><img src="${im.preview}" alt="Photo ${i + 1}"><button type="button" data-rm="${i}" aria-label="Remove photo ${i + 1}">×</button></div>`).join('');
 }
-$('#thumbs').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-rm]'); if (!b) return;
-  e.preventDefault(); state.images.splice(+b.dataset.rm, 1); renderThumbs();
-});
+$('#thumbs').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (!b) return; e.preventDefault(); state.images.splice(+b.dataset.rm, 1); renderThumbs(); });
 $('#btnChoose').addEventListener('click', (e) => { e.preventDefault(); $('#fileInput').click(); });
 $('#btnCamera').addEventListener('click', (e) => { e.preventDefault(); $('#cameraInput').click(); });
-$('#fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
-$('#cameraInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+['#fileInput', '#cameraInput'].forEach((id) => $(id).addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; }));
 document.addEventListener('paste', (e) => {
   const files = [...(e.clipboardData?.items || [])].filter((i) => i.kind === 'file').map((i) => i.getAsFile()).filter(Boolean);
   if (files.length) { e.preventDefault(); addFiles(files); }
@@ -302,9 +402,7 @@ const drop = $('#drop');
 drop.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
 
 /* ---------- Options ---------- */
-function renderDiet() {
-  $('#diet').innerHTML = DIETS.map((d) => `<button type="button" class="chip" aria-pressed="${state.diet.has(d)}" data-d="${d}">${d}</button>`).join('');
-}
+function renderDiet() { $('#diet').innerHTML = DIETS.map((d) => `<button type="button" class="chip" aria-pressed="${state.diet.has(d)}" data-d="${d}">${d}</button>`).join(''); }
 $('#diet').addEventListener('click', (e) => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   state.diet.has(b.dataset.d) ? state.diet.delete(b.dataset.d) : state.diet.add(b.dataset.d);
@@ -315,16 +413,14 @@ $('#minus').addEventListener('click', () => { state.servings = Math.max(1, state
 $('#plus').addEventListener('click', () => { state.servings = Math.min(12, state.servings + 1); renderServings(); });
 
 function showMsg(text, kind = 'error') { $('#msg').innerHTML = text ? `<div class="${kind}" role="alert">${esc(text)}</div>` : ''; }
-function showLoading(text) { $('#msg').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(text)}</div></div>`; }
+function showLoading(text) {
+  $('#msg').innerHTML = `<div class="loading"><div class="spin"></div><div>${esc(text)}</div></div><div class="skgrid"><div class="sk"></div><div class="sk"></div></div>`;
+}
 
 /* ---------- Suggest ---------- */
 function payload(useImages) {
-  return {
-    images: useImages ? state.images.map((i) => i.data) : [],
-    ingredients: useImages ? [] : state.ingredients,
-    notes: $('#notes').value, diet: [...state.diet], cuisine: $('#cuisine').value,
-    servings: state.servings, maxTime: +$('#maxTime').value,
-  };
+  return { images: useImages ? state.images.map((i) => i.data) : [], ingredients: useImages ? [] : state.ingredients,
+    notes: $('#notes').value, diet: [...state.diet], cuisine: $('#cuisine').value, servings: state.servings, maxTime: +$('#maxTime').value };
 }
 async function suggest(useImages) {
   const btns = [$('#go'), $('#refresh')]; btns.forEach((b) => (b.disabled = true));
@@ -332,75 +428,71 @@ async function suggest(useImages) {
   try {
     const out = await api('/api/suggest', payload(useImages));
     state.ingredients = (out.ingredients || []).map((i) => i.name).filter(Boolean);
-    if (!useImages) state.ingredients = state.ingredients.length ? state.ingredients : [];
     state.dishes = out.dishes || [];
     showMsg(out.note || '', 'notice');
-    renderResults();
+    renderResults(true);
+    $('#go').textContent = 'Search again';
   } catch (e) { showMsg(e.message, 'error'); }
   finally { btns.forEach((b) => (b.disabled = false)); }
 }
 $('#go').addEventListener('click', () => suggest(true));
 $('#refresh').addEventListener('click', () => suggest(false));
 
-function renderResults() {
+function renderResults(scroll) {
   const has = state.ingredients.length || state.dishes.length;
   $('#results').classList.toggle('hidden', !has);
   $('#found').innerHTML = state.ingredients.length
     ? state.ingredients.map((n, i) => `<span class="ing">${esc(n)}<button type="button" data-ri="${i}" aria-label="Remove ${esc(n)}">×</button></span>`).join('')
     : '<span style="color:var(--muted)">Nothing detected yet. Add ingredients below.</span>';
-  $('#dishes').innerHTML = state.dishes.length ? state.dishes.map((d, i) => dishCard(d, i)).join('')
+  $('#dishes').innerHTML = state.dishes.length ? state.dishes.map((d, i) => dishCard(d, i, 'cook')).join('')
     : '<div class="empty">No dishes yet. Add ingredients and tap Update dishes.</div>';
-  if (has) $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  hydrate($('#dishes'));
+  if (scroll && has) $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-function dishCard(d, i) {
-  const miss = (d.missing || []).length ? `<div class="miss"><b>You’d need:</b> ${esc(d.missing.join(', '))}</div>` : `<div class="miss">You have everything.</div>`;
+function dishCard(d, i, mode) {
   const pct = Math.max(0, Math.min(100, +d.match_percent || 0));
+  const miss = (d.missing || []).length ? `<div class="miss"><b>You’ll need:</b> ${esc(d.missing.join(', '))}</div>` : `<div class="miss">✅ You have everything.</div>`;
   return `<article class="dish">
-    <div class="emo" aria-hidden="true">${esc(d.emoji || '🍽️')}</div>
-    <h3>${esc(d.name)}</h3>
-    <div class="meta">${esc(d.cuisine || '')} • ${esc(d.time_minutes || '?')} min • ${esc(d.difficulty || '')}</div>
-    <p class="desc">${esc(d.description || '')}</p>
-    <div class="match"><div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="matchtxt"><span>Uses ${esc((d.uses || []).slice(0, 5).join(', '))}</span><span>${pct}% match</span></div></div>
-    ${miss}
-    <div class="dish-actions"><button class="btn" data-cook="${i}">Start cooking</button></div>
-  </article>`;
+    <div class="dimg ph" data-img="${esc(d.photo_search || d.name)}"><span class="fb" aria-hidden="true">${esc(d.emoji || '🍽️')}</span>
+      <div class="badges"><span>⏱ ${esc(d.time_minutes || '?')} min</span><span>${esc(d.difficulty || 'Easy')}</span></div></div>
+    <div class="dbody"><h3>${esc(d.name)}</h3><div class="cu">${esc(d.cuisine || '')}</div><p>${esc(d.description || '')}</p>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="matchtxt"><span>Uses ${esc((d.uses || []).slice(0, 4).join(', '))}</span><span>${pct}% match</span></div>
+      ${miss}<button class="btn lemon block" data-cook="${i}">Start cooking</button></div></article>`;
 }
-$('#found').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-ri]'); if (!b) return;
-  state.ingredients.splice(+b.dataset.ri, 1); renderResults();
-});
+$('#found').addEventListener('click', (e) => { const b = e.target.closest('[data-ri]'); if (!b) return; state.ingredients.splice(+b.dataset.ri, 1); renderResults(false); });
 $('#addForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const v = $('#addInput').value.trim(); if (!v) return;
+  e.preventDefault(); const v = $('#addInput').value.trim(); if (!v) return;
   v.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => state.ingredients.push(s));
-  $('#addInput').value = ''; renderResults();
+  $('#addInput').value = ''; renderResults(false);
 });
 $('#dishes').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-cook]'); if (!b) return;
   const d = state.dishes[+b.dataset.cook];
-  b.disabled = true; b.textContent = 'Writing the recipe…';
+  $('#loaderTxt').textContent = `Writing the recipe for ${d.name}…`; $('#loader').classList.remove('hidden');
   try {
     const r = await api('/api/recipe', { dish: d.name, ingredients: state.ingredients, diet: [...state.diet], servings: state.servings });
+    r.photo_search = r.photo_search || d.photo_search || d.name; r.emoji = r.emoji || d.emoji;
     openCook(r);
   } catch (err) { showMsg(err.message, 'error'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-  finally { b.disabled = false; b.textContent = 'Start cooking'; }
+  finally { $('#loader').classList.add('hidden'); }
 });
 
 /* ---------- Saved ---------- */
 const isSaved = (r) => state.saved.some((s) => s.name === r.name);
 function toggleSave(r) {
-  if (isSaved(r)) state.saved = state.saved.filter((s) => s.name !== r.name);
-  else state.saved.unshift(r);
+  state.saved = isSaved(r) ? state.saved.filter((s) => s.name !== r.name) : [r, ...state.saved];
   store.set('pc_saved', state.saved); renderSaved();
 }
 function renderSaved() {
   $('#savedCount').textContent = state.saved.length ? `(${state.saved.length})` : '';
   $('#savedList').innerHTML = state.saved.length ? state.saved.map((r, i) => `<article class="dish">
-    <div class="emo" aria-hidden="true">${esc(r.emoji || '🍽️')}</div><h3>${esc(r.name)}</h3>
-    <div class="meta">${esc(r.total_time_minutes || '?')} min • ${esc(r.difficulty || '')} • serves ${esc(r.servings || '')}</div>
-    <div class="dish-actions"><button class="btn" data-open="${i}">Cook</button><button class="btn ghost" data-del="${i}">Remove</button></div></article>`).join('')
-    : '<div class="empty">Nothing saved yet. Open a recipe and tap Save.</div>';
+    <div class="dimg ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span>
+      <div class="badges"><span>⏱ ${esc(r.total_time_minutes || '?')} min</span><span>${esc(r.difficulty || '')}</span></div></div>
+    <div class="dbody"><h3>${esc(r.name)}</h3><p>${esc(r.summary || '')}</p>
+      <div style="display:flex;gap:8px;margin-top:auto"><button class="btn lemon" style="flex:2" data-open="${i}">Cook</button><button class="btn ghost" style="flex:1" data-del="${i}">Remove</button></div></div></article>`).join('')
+    : '<div class="empty">Nothing saved yet. Open a recipe and tap the heart.</div>';
+  hydrate($('#savedList'));
 }
 $('#savedList').addEventListener('click', (e) => {
   const o = e.target.closest('[data-open]'), d = e.target.closest('[data-del]');
@@ -409,106 +501,248 @@ $('#savedList').addEventListener('click', (e) => {
 });
 function setView(v) {
   $('#viewCook').classList.toggle('hidden', v !== 'cook'); $('#viewSaved').classList.toggle('hidden', v !== 'saved');
+  $('#cta').classList.toggle('hidden', v !== 'cook');
   $('#tabCook').setAttribute('aria-pressed', v === 'cook'); $('#tabSaved').setAttribute('aria-pressed', v === 'saved');
+  window.scrollTo({ top: 0 });
 }
 $('#tabCook').addEventListener('click', () => setView('cook'));
 $('#tabSaved').addEventListener('click', () => setView('saved'));
 
-/* ---------- Cooking mode ---------- */
-let wake = null, tick = null;
+/* ---------- Interactive cooking mode ---------- */
+const ACTIONS = {
+  prep:{e:'🧺',c:'#DCEBD7',a:'bob'}, chop:{e:'🔪',c:'#FDE3C8',a:'chop'}, heat:{e:'🍳',c:'#FFE1D6',a:'bob',s:1}, temper:{e:'✨',c:'#FFF1C2',a:'sizzle',s:1},
+  saute:{e:'🥘',c:'#FFE6C7',a:'stir',s:1}, fry:{e:'🍳',c:'#FFE1D6',a:'sizzle',s:1}, boil:{e:'🫕',c:'#D9ECF7',a:'bob',s:1}, simmer:{e:'🍲',c:'#FFE9D2',a:'bob',s:1},
+  pressure:{e:'🍲',c:'#E4E4F4',a:'sizzle',s:1}, mix:{e:'🥣',c:'#F3E6D3',a:'stir'}, grind:{e:'🌀',c:'#E8DFF5',a:'spin'}, knead:{e:'🫓',c:'#F6EBD3',a:'chop'},
+  steam:{e:'♨️',c:'#DDEFF3',a:'bob',s:1}, roast:{e:'🔥',c:'#FFE0CC',a:'sizzle',s:1}, rest:{e:'⏳',c:'#E9EFE3',a:'bob'}, serve:{e:'🍽️',c:'#FFF1C2',a:'pop'},
+};
+const FLAME = { off: 0, low: 1, medium: 2, high: 3 };
+const fmt = (s) => { s = Math.max(0, s); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+let wake = null, tick = null, rec = null;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
 async function keepAwake() { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
 function openCook(recipe) {
-  state.cook = { r: recipe, i: 0, tab: 'steps', checked: new Set(), timer: null };
-  $('#cook').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  state.cook = { r: recipe, i: -1, timers: {}, added: new Set(), gathered: new Set(), speak: store.get('pc_speak', false), listen: false };
+  const el = $('#cook'); el.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => el.classList.add('show'));
   keepAwake(); renderCook();
 }
 function closeCook() {
-  clearInterval(tick); tick = null; state.cook = null;
-  $('#cook').classList.add('hidden'); document.body.style.overflow = ''; try { wake?.release(); } catch {}
+  clearInterval(tick); tick = null;
+  try { rec && (state.cook.listen = false, rec.stop()); } catch {} rec = null;
+  try { speechSynthesis.cancel(); } catch {}
+  state.cook = null; document.querySelectorAll('.confetti').forEach((n) => n.remove());
+  const el = $('#cook'); el.classList.remove('show'); setTimeout(() => { if (!state.cook) el.classList.add('hidden'); }, 300);
+  document.body.style.overflow = ''; try { wake?.release(); } catch {}
   renderSaved();
 }
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = speechSynthesis.getVoices().find((x) => /en[-_]IN/i.test(x.lang)); if (v) u.voice = v;
+    u.lang = 'en-IN'; u.rate = 0.95; speechSynthesis.speak(u);
+  } catch {}
+}
+function speakStep() {
+  const c = state.cook; const s = c?.r.steps?.[c.i]; if (!s) return;
+  speak([s.title, s.instruction, s.cue ? `Look for: ${s.cue}` : ''].filter(Boolean).join('. '));
+}
+function go(to) {
+  const c = state.cook; if (!c) return; const n = (c.r.steps || []).length;
+  c.i = Math.max(-1, Math.min(n, to)); buzz(); renderCook();
+  if (c.i >= 0 && c.i < n && c.speak) speakStep();
+  if (c.i >= n) { confetti(); if (c.speak) speak('Your dish is ready. Enjoy your meal!'); }
+}
+function confetti() {
+  const box = document.createElement('div'); box.className = 'confetti';
+  box.innerHTML = Array.from({ length: 26 }, () => `<span style="left:${Math.random() * 100}%;animation-delay:${Math.random() * 1.2}s">${['🎉','✨','🌶️','🍋','🌿','🥳'][Math.floor(Math.random() * 6)]}</span>`).join('');
+  document.body.appendChild(box); setTimeout(() => box.remove(), 5000);
+}
+
 function renderCook() {
   const c = state.cook; if (!c) return;
-  const r = c.r, steps = r.steps || [], last = c.i >= steps.length;
-  const pct = steps.length ? Math.round((Math.min(c.i, steps.length) / steps.length) * 100) : 0;
-  let body = '';
-  if (c.tab === 'ing') {
-    body = `<ul class="cl">${(r.ingredients || []).map((g, k) => `<li><label><input type="checkbox" data-k="${k}" ${c.checked.has(k) ? 'checked' : ''}><span>${esc(g.item)}</span>
-      <span class="amt">${esc(g.amount)}${g.have === false ? '<br><span class="need">need to buy</span>' : ''}</span></label></li>`).join('')}</ul>
-      ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
-  } else if (last) {
-    body = `<div class="finish"><div class="big-emo">${esc(r.emoji || '🍽️')}</div><h2 class="step-title">Ready to eat!</h2>
-      <p class="step-text" style="margin:0 auto">${esc(r.name)} is done. Enjoy your meal.</p></div>
-      ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
-  } else {
-    const s = steps[c.i];
-    body = `<span class="stepnum">${c.i + 1}</span><h2 class="step-title">${esc(s.title)}</h2><p class="step-text">${esc(s.instruction)}</p>
-      ${s.tip ? `<div class="tip">${esc(s.tip)}</div>` : ''}
-      ${s.timer_minutes ? timerBox(s.timer_minutes) : ''}`;
-  }
+  const r = c.r, steps = r.steps || [], n = steps.length, i = c.i;
+  const sub = i < 0 ? 'Get ready' : i >= n ? 'All done!' : `Step ${i + 1} of ${n}`;
+  const body = i < 0 ? prepHTML(r) : i >= n ? finishHTML(r) : stepHTML(steps[i], i);
+  const next = i < 0 ? `Let’s start cooking →` : i >= n ? 'Done' : i === n - 1 ? 'Finish 🎉' : 'Next step →';
   $('#cook').innerHTML = `
-    <div class="cook-top"><button class="x" id="cx" aria-label="Close cooking mode">×</button>
-      <h2>${esc(r.name)}</h2>
-      <button class="btn ${isSaved(r) ? '' : 'ghost'}" id="csave">${isSaved(r) ? 'Saved ✓' : 'Save'}</button></div>
-    <div class="tabs"><button data-t="steps" aria-pressed="${c.tab === 'steps'}">Steps</button><button data-t="ing" aria-pressed="${c.tab === 'ing'}">Ingredients (${(r.ingredients || []).length})</button></div>
-    <div class="prog"><i style="width:${pct}%"></i></div>
-    <div class="cook-body"><div class="cook-inner">${body}</div></div>
-    ${c.tab === 'steps' ? `<div class="cook-nav"><button class="btn ghost" id="cprev" ${c.i === 0 ? 'disabled' : ''}>Back</button>
-      <button class="btn lemon" id="cnext">${last ? 'Close' : c.i === steps.length - 1 ? 'Finish' : 'Next step'}</button></div>` : ''}`;
+    <div class="ctop">
+      <button class="ib dark" id="cx" aria-label="Close cooking mode">✕</button>
+      <div class="ctitle"><b>${esc(r.name)}</b><small>${sub}</small></div>
+      <button class="ib ${c.speak ? 'on' : ''}" id="cspeak" aria-label="Read steps aloud" aria-pressed="${c.speak}">🔊</button>
+      ${SR ? `<button class="ib ${c.listen ? 'on' : ''}" id="cmic" aria-label="Voice commands" aria-pressed="${c.listen}">🎙️</button>` : ''}
+      <button class="ib ${isSaved(r) ? 'on' : ''}" id="csave" aria-label="Save recipe">${isSaved(r) ? '❤️' : '🤍'}</button>
+    </div>
+    <div class="segs">${steps.map((_, k) => `<button class="seg ${k < i ? 'done' : k === i ? 'now' : ''}" data-go="${k}" aria-label="Go to step ${k + 1}"></button>`).join('')}</div>
+    <div class="pills" id="pills">${pillsHTML()}</div>
+    <div class="cbody" id="cbody"><div class="cinner">${body}</div></div>
+    <div class="cnav">${i > -1 && i < n ? '<button class="btn ghost" id="cprev">← Back</button>' : ''}<button class="btn lemon" id="cnext">${next}</button></div>`;
+  hydrate($('#cook'));
 }
-function timerBox(mins) {
-  const t = state.cook.timer;
-  const active = t && t.step === state.cook.i;
-  const secs = active ? t.left : mins * 60;
-  const done = active && t.left <= 0;
-  return `<div class="timer ${done ? 'done' : ''}" id="timerBox"><div class="t" id="tv">${fmt(secs)}</div>
-    <button class="btn" id="tbtn">${done ? 'Stop' : active && t.running ? 'Pause' : active ? 'Resume' : 'Start timer'}</button>
-    ${active ? '<button class="btn ghost" id="treset">Reset</button>' : ''}</div>`;
+
+function prepHTML(r) {
+  const c = state.cook; const list = r.ingredients || [];
+  return `<div class="hero ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
+    <div class="meta"><span>⏱ ${esc(r.total_time_minutes || '?')} min</span><span>${esc(r.difficulty || 'Easy')}</span><span>🍽️ Serves ${esc(r.servings || '')}</span></div>
+    ${r.summary ? `<p class="stext">${esc(r.summary)}</p>` : ''}
+    <div class="lbl">Gather your ingredients <small id="gcount">${c.gathered.size} of ${list.length} ready</small></div>
+    <div class="ichips">${list.map((g, k) => chipHTML(g, `g${k}`, c.gathered.has(k), g.have === false)).join('')}</div>
+    ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
 }
-const fmt = (s) => { s = Math.max(0, s); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+function chipHTML(g, key, on, need) {
+  return `<button class="ichip ${on ? 'on' : ''}" data-chip="${key}" aria-pressed="${on}">
+    <span class="ithumb" data-img="${esc(g.item)}"><span class="fb">${emojiFor(g.item)}</span></span>
+    <span class="itxt"><b>${esc(g.item)}</b><small>${esc(g.amount || '')}</small>${need ? '<span class="need">need to buy</span>' : ''}</span>
+    <span class="tick">✓</span></button>`;
+}
+function stepHTML(s, k) {
+  const a = ACTIONS[s.action] || ACTIONS.prep; const c = state.cook;
+  const lvl = FLAME[s.flame];
+  const puffs = a.s ? '<span class="puff" style="left:34%"></span><span class="puff"></span><span class="puff"></span><span class="puff"></span>' : '';
+  const flame = lvl === undefined ? '' : lvl === 0 ? '<div class="flame">Flame off ⛔</div>'
+    : `<div class="flame">Flame <i class="${lvl >= 1 ? 'on' : ''}">🔥</i><i class="${lvl >= 2 ? 'on' : ''}">🔥</i><i class="${lvl >= 3 ? 'on' : ''}">🔥</i> ${esc(s.flame)}</div>`;
+  const uses = s.uses || [];
+  return `<div class="visual a-${a.a}" style="--vc:${a.c}">${puffs}${flame}<span class="vemo" aria-hidden="true">${a.e}</span></div>
+    <h2 class="stitle">${esc(s.title)}</h2><p class="stext">${esc(s.instruction)}</p>
+    ${uses.length ? `<div class="lbl">Add in this step <small id="ucount">${uses.filter((_, j) => c.added.has(`${k}:${j}`)).length} of ${uses.length} added</small></div>
+      <div class="ichips">${uses.map((g, j) => chipHTML(g, `u${k}:${j}`, c.added.has(`${k}:${j}`), false)).join('')}</div>` : ''}
+    ${s.cue ? `<div class="cue">👀 <b>Look for:</b> ${esc(s.cue)}</div>` : ''}
+    ${s.tip ? `<div class="tip">💡 ${esc(s.tip)}</div>` : ''}
+    ${s.timer_minutes ? `<div id="timerWrap">${timerHTML(k, s.timer_minutes)}</div>` : ''}`;
+}
+function finishHTML(r) {
+  return `<div class="finish"><div class="hero ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
+    <h2 class="stitle">Ready to eat! 🎉</h2><p class="stext">${esc(r.name)} is done. Serve it hot and enjoy.</p>
+    ${(r.tips || []).length ? `<div class="tip tipsbox"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}
+    <button class="btn ghost block" id="csave2" style="margin-top:16px">${isSaved(r) ? '❤️ Saved' : '🤍 Save this recipe'}</button></div>`;
+}
+
+/* timers (keep running across steps) */
+function timerHTML(k, mins) {
+  const t = state.cook.timers[k]; const total = t ? t.total : mins * 60; const left = t ? t.left : total;
+  const run = t && t.running, done = t && t.left <= 0; const C = 2 * Math.PI * 54;
+  return `<div class="timer ${done ? 'done' : ''}"><svg viewBox="0 0 120 120" class="ring" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="54"/>
+    <circle class="fg" id="ringfg" cx="60" cy="60" r="54" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - (total ? left / total : 1))}"/></svg>
+    <div class="tmid"><div class="t" id="tv">${fmt(left)}</div><small>${done ? 'Time’s up!' : run ? 'running' : t ? 'paused' : 'timer'}</small></div></div>
+    <div class="tbtns"><button class="btn" id="tbtn">${done ? 'Stop' : run ? 'Pause' : t ? 'Resume' : '▶ Start timer'}</button>
+    <button class="btn ghost" id="tplus">+1 min</button>${t ? '<button class="btn ghost" id="treset">Reset</button>' : ''}</div>`;
+}
+function pillsHTML() {
+  const c = state.cook; if (!c) return '';
+  return Object.entries(c.timers).filter(([, t]) => t.running || t.left <= 0)
+    .map(([k, t]) => `<button class="pill ${t.left <= 0 ? 'done' : ''}" data-go="${k}">⏱ ${esc(t.label)} · ${t.left <= 0 ? 'done!' : fmt(t.left)}</button>`).join('');
+}
+function refreshTimerUI() {
+  const c = state.cook; if (!c) return; const s = c.r.steps?.[c.i];
+  const w = $('#timerWrap'); if (w && s?.timer_minutes) w.innerHTML = timerHTML(c.i, s.timer_minutes);
+  const p = $('#pills'); if (p) p.innerHTML = pillsHTML();
+}
+function paintTimers() {
+  const c = state.cook; if (!c) return; const t = c.timers[c.i];
+  if (t) {
+    const tv = $('#tv'), fg = $('#ringfg');
+    if (tv) tv.textContent = fmt(t.left);
+    if (fg) fg.setAttribute('stroke-dashoffset', 2 * Math.PI * 54 * (1 - t.left / t.total));
+  }
+  const p = $('#pills'); if (p) p.innerHTML = pillsHTML();
+}
+function ensureTick() {
+  if (tick) return;
+  tick = setInterval(() => {
+    const c = state.cook; if (!c) { clearInterval(tick); tick = null; return; }
+    let running = false;
+    for (const [k, t] of Object.entries(c.timers)) {
+      if (!t.running) continue;
+      t.left -= 1;
+      if (t.left <= 0) { t.left = 0; t.running = false; alarm(+k); } else running = true;
+    }
+    paintTimers();
+    if (!running) { clearInterval(tick); tick = null; }
+  }, 1000);
+}
+function alarm(k) {
+  const c = state.cook; const s = c.r.steps[k];
+  beep(); buzz([300, 150, 300]); toast(`⏰ ${s.title} – time’s up!`);
+  if (c.speak) speak(`Time's up for ${s.title}`);
+  if (c.i === k) refreshTimerUI();
+}
 function beep() {
   try {
     const a = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.35, 0.7].forEach((d) => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
-      o.frequency.value = 880; g.gain.value = 0.2; o.start(a.currentTime + d); o.stop(a.currentTime + d + 0.2); });
+    [0, 0.35, 0.7].forEach((d) => { const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = 0.2; o.start(a.currentTime + d); o.stop(a.currentTime + d + 0.2); });
   } catch {}
-  navigator.vibrate?.([300, 150, 300]);
 }
-function startTimer() {
-  const c = state.cook, mins = c.r.steps[c.i].timer_minutes;
-  if (!c.timer || c.timer.step !== c.i) c.timer = { step: c.i, left: mins * 60, running: false };
-  const t = c.timer;
-  if (t.left <= 0) { clearInterval(tick); t.running = false; c.timer = null; return renderCook(); }
-  if (t.running) { t.running = false; clearInterval(tick); }
-  else {
-    t.running = true; clearInterval(tick);
-    tick = setInterval(() => {
-      t.left -= 1;
-      const tv = $('#tv');
-      if (t.left <= 0) { clearInterval(tick); t.running = false; beep(); if (state.cook && state.cook.i === t.step) renderCook(); }
-      else if (tv && state.cook && state.cook.i === t.step) tv.textContent = fmt(t.left);
-    }, 1000);
-  }
-  renderCook();
+function getTimer(create) {
+  const c = state.cook, k = c.i, s = c.r.steps[k];
+  if (!c.timers[k] && create) c.timers[k] = { total: s.timer_minutes * 60, left: s.timer_minutes * 60, running: false, label: s.title };
+  return c.timers[k];
 }
+function toggleTimer() {
+  const c = state.cook; const t = getTimer(true);
+  if (t.left <= 0) { delete c.timers[c.i]; return refreshTimerUI(); }
+  t.running = !t.running; if (t.running) ensureTick(); refreshTimerUI();
+}
+
+/* voice commands */
+function toggleListen() {
+  const c = state.cook; if (!SR) return toast('Voice commands are not supported in this browser');
+  if (c.listen) { c.listen = false; try { rec?.stop(); } catch {} rec = null; return renderCook(); }
+  c.listen = true; startRec(); toast('Listening. Say “next”, “back”, “repeat” or “start timer”'); renderCook();
+}
+function startRec() {
+  rec = new SR(); rec.lang = 'en-IN'; rec.continuous = true; rec.interimResults = false;
+  rec.onresult = (e) => voiceCmd(e.results[e.results.length - 1][0].transcript.toLowerCase());
+  rec.onend = () => { if (state.cook?.listen) { try { rec.start(); } catch {} } };
+  rec.onerror = (ev) => { if (ev.error === 'not-allowed' && state.cook) { state.cook.listen = false; toast('Microphone permission was denied'); renderCook(); } };
+  try { rec.start(); } catch {}
+}
+function voiceCmd(t) {
+  const c = state.cook; if (!c) return; const s = c.r.steps?.[c.i];
+  if (/\b(next|aage|continue|forward)\b/.test(t)) go(c.i + 1);
+  else if (/\b(back|previous|pichla|before)\b/.test(t)) go(c.i - 1);
+  else if (/\b(repeat|again|read)\b/.test(t)) speakStep();
+  else if (/\btimer\b|\bstart\b/.test(t) && s?.timer_minutes) { const tm = getTimer(true); if (!tm.running) toggleTimer(); }
+  else if (/\b(stop|pause)\b/.test(t) && s?.timer_minutes) { const tm = getTimer(false); if (tm?.running) toggleTimer(); }
+}
+
+/* events (delegated, so re-rendering never loses them) */
 $('#cook').addEventListener('click', (e) => {
-  const c = state.cook; if (!c) return;
+  const c = state.cook; if (!c) return; const n = (c.r.steps || []).length;
+  const chip = e.target.closest('[data-chip]');
+  if (chip) {
+    const key = chip.dataset.chip; const on = !chip.classList.contains('on');
+    chip.classList.toggle('on', on); chip.setAttribute('aria-pressed', on); buzz(8);
+    if (key[0] === 'g') { const k = +key.slice(1); on ? c.gathered.add(k) : c.gathered.delete(k); const g = $('#gcount'); if (g) g.textContent = `${c.gathered.size} of ${(c.r.ingredients || []).length} ready`; }
+    else { const id = key.slice(1); on ? c.added.add(id) : c.added.delete(id); const u = $('#ucount'); if (u) { const s = c.r.steps[c.i]; u.textContent = `${(s.uses || []).filter((_, j) => c.added.has(`${c.i}:${j}`)).length} of ${s.uses.length} added`; } }
+    return;
+  }
+  const goBtn = e.target.closest('[data-go]'); if (goBtn) return go(+goBtn.dataset.go);
   const id = e.target.closest('button')?.id;
-  const tab = e.target.closest('[data-t]');
   if (id === 'cx') return closeCook();
-  if (id === 'csave') { toggleSave(c.r); return renderCook(); }
-  if (tab) { c.tab = tab.dataset.t; return renderCook(); }
-  if (id === 'cprev') { c.i = Math.max(0, c.i - 1); return renderCook(); }
-  if (id === 'cnext') { if (c.i >= c.r.steps.length) return closeCook(); c.i += 1; return renderCook(); }
-  if (id === 'tbtn') return startTimer();
-  if (id === 'treset') { clearInterval(tick); c.timer = null; return renderCook(); }
+  if (id === 'cprev') return go(c.i - 1);
+  if (id === 'cnext') return c.i >= n ? closeCook() : go(c.i + 1);
+  if (id === 'csave' || id === 'csave2') { toggleSave(c.r); toast(isSaved(c.r) ? 'Saved ❤️' : 'Removed from saved'); return renderCook(); }
+  if (id === 'cspeak') { c.speak = !c.speak; store.set('pc_speak', c.speak); try { speechSynthesis.cancel(); } catch {} renderCook(); if (c.speak) (c.i >= 0 && c.i < n ? speakStep() : speak(c.r.name)); return; }
+  if (id === 'cmic') return toggleListen();
+  if (id === 'tbtn') return toggleTimer();
+  if (id === 'tplus') { const t = getTimer(true); t.total += 60; t.left += 60; return refreshTimerUI(); }
+  if (id === 'treset') { delete c.timers[c.i]; return refreshTimerUI(); }
 });
-$('#cook').addEventListener('change', (e) => {
-  const k = e.target.dataset?.k; if (k === undefined || !state.cook) return;
-  e.target.checked ? state.cook.checked.add(+k) : state.cook.checked.delete(+k);
+let tx = 0, ty = 0;
+$('#cook').addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+$('#cook').addEventListener('touchend', (e) => {
+  const c = state.cook; if (!c || e.target.closest('.pills,.chips,input')) return;
+  const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 70 && Math.abs(dy) < 45) go(c.i + (dx < 0 ? 1 : -1));
+}, { passive: true });
+document.addEventListener('keydown', (e) => {
+  const c = state.cook; if (!c) return;
+  if (e.key === 'Escape') closeCook(); else if (e.key === 'ArrowRight') go(c.i + 1); else if (e.key === 'ArrowLeft') go(c.i - 1);
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.cook) closeCook(); });
 document.addEventListener('visibilitychange', () => { if (state.cook && document.visibilityState === 'visible') keepAwake(); });
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => {};
 
 /* ---------- init ---------- */
 renderDiet(); renderServings(); renderSaved();
