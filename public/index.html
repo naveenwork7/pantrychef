@@ -273,6 +273,15 @@ html[data-dir="prev"]::view-transition-new(step){animation:.34s cubic-bezier(.2,
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:95}
 .confetti span{position:absolute;top:-30px;font-size:1.7rem;animation:fall 3.4s linear forwards}
 @keyframes fall{to{transform:translateY(112vh) rotate(420deg)}}
+
+/* additions for saving + product photos (same warm palette) */
+.sq.on{background:linear-gradient(135deg,#FF5C6C,#FF8A1F)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 8px 22px rgba(255,92,108,.45)}
+.sq.on .ico{fill:currentColor}
+.hint{font-size:.78rem;color:rgba(255,255,255,.7)}
+#savedCount:not(:empty){background:var(--grad);color:var(--on-sun);border-radius:999px;padding:1px 8px;font-size:.78rem;margin-left:2px}
+.ib.heartb.on{background:linear-gradient(135deg,#FF5C6C,#FF8A1F);color:#fff;border-color:transparent}
+.ithumb.has{background-size:80%;background-color:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.ithumb.has .fb{display:none}
 </style>
 </head>
 <body>
@@ -420,13 +429,17 @@ $('#themeBtn').addEventListener('click', () => setTheme(document.documentElement
 const state = {
   images: [], ingredients: [], dishes: [],
   diet: new Set(store.get('pc_diet', [])), servings: store.get('pc_servings', 2),
-  saved: store.get('pc_saved', []), pw: store.get('pc_pw', ''), cook: null,
+  saved: store.get('pc_saved', []), recipes: {}, pw: store.get('pc_pw', ''), cook: null,
 };
 const DIETS = ['Vegetarian','Vegan','Eggless','Gluten-free','Dairy-free','Halal','High-protein'];
 
-/* ---------- food photos from Wikipedia (free, no key) ---------- */
-const imgCache = store.get('pc_img', {});
+/* ---------- pictures ----------
+   Ingredients: TheMealDB transparent product photos (only exact/near-exact matches, else the emoji stays).
+   Dishes: Wikipedia photos, filtered so botanical drawings, maps and logos are never used. */
+const imgCache = store.get('pc_img2', {});
 const inflight = new Map();
+const BAD_IMG = /(koehler|botanical|illustration|drawing|diagram|\bmap\b|flag|logo|icon|symbol|svg|chart|engraving|sketch|painting|plate_)/i;
+const words = (s) => (String(s).toLowerCase().match(/[a-z]{3,}/g) || []);
 function wikiImg(q) {
   q = (q || '').trim().toLowerCase();
   if (!q) return Promise.resolve('');
@@ -434,26 +447,78 @@ function wikiImg(q) {
   if (inflight.has(q)) return inflight.get(q);
   const p = (async () => {
     try {
-      const u = 'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=4&prop=pageimages&piprop=thumbnail&pithumbsize=720&gsrsearch=' + encodeURIComponent(q);
+      const u = 'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=0&gsrlimit=5&prop=pageimages&piprop=thumbnail&pithumbsize=720&gsrsearch=' + encodeURIComponent(q);
       const d = await (await fetch(u)).json();
+      const qw = words(q);
       const pages = Object.values(d.query?.pages || {}).sort((a, b) => a.index - b.index);
-      const url = pages.find((x) => x.thumbnail?.source)?.thumbnail.source || '';
-      imgCache[q] = url; store.set('pc_img', imgCache);
+      const hit = pages.find((x) => x.thumbnail?.source && !BAD_IMG.test(x.thumbnail.source) && !/^list of/i.test(x.title || '') && words(x.title).some((t) => qw.includes(t)));
+      const url = hit ? hit.thumbnail.source : '';
+      imgCache[q] = url; store.set('pc_img2', imgCache);
       return url;
     } catch { return ''; }
   })();
   inflight.set(q, p);
   return p;
 }
+
+/* ingredient photos */
+const normIng = (s) => String(s).toLowerCase().replace(/chilies|chillies|chilis|chilli|chili/g, 'chilli').replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(Boolean)
+  .map((w) => w.replace(/oes$/, 'o').replace(/ies$/, 'y').replace(/s$/, '')).join(' ');
+const ING_ALIAS = { 'tamato': 'tomato', 'coriander leaf': 'coriander', 'coriander leave': 'coriander', 'cilantro': 'coriander', 'dhania': 'coriander', 'curd': 'yogurt', 'dahi': 'yogurt',
+  'capsicum': 'green pepper', 'brinjal': 'aubergine', 'eggplant': 'aubergine', 'lady finger': 'okra', 'ladies finger': 'okra', 'bhindi': 'okra', 'maida': 'plain flour',
+  'haldi': 'turmeric', 'jeera': 'cumin', 'spring onion': 'spring onion', 'green onion': 'spring onion', 'scallion': 'spring onion', 'chana dal': 'chickpea', 'chickpeas': 'chickpea' };
+let ingIndex = null, ingLoading = null;
+const ingUrlCache = new Map();
+function loadIngIndex() {
+  if (ingIndex) return Promise.resolve(ingIndex);
+  if (ingLoading) return ingLoading;
+  ingLoading = (async () => {
+    let names = null; const c = store.get('pc_ing_list', null);
+    if (c && Date.now() - c.t < 30 * 864e5 && c.names?.length) names = c.names;
+    else {
+      try {
+        const d = await (await fetch('https://www.themealdb.com/api/json/v1/1/list.php?i=list')).json();
+        names = (d.meals || []).map((m) => m.strIngredient).filter(Boolean);
+        if (names.length) store.set('pc_ing_list', { t: Date.now(), names });
+      } catch {}
+    }
+    if (!names?.length) { ingLoading = null; return []; }
+    ingIndex = names.map((n) => ({ name: n, key: normIng(n) }));
+    return ingIndex;
+  })();
+  return ingLoading;
+}
+function findIng(q, idx) {
+  let key = normIng(q); if (!key) return null;
+  if (ING_ALIAS[key]) key = normIng(ING_ALIAS[key]);
+  const exact = idx.find((x) => x.key === key); if (exact) return exact.name;
+  let best = null;                                           // "garlic cloves" -> Garlic (name must START the query)
+  for (const x of idx) if (x.key.length >= 3 && (key + ' ').startsWith(x.key + ' ') && (!best || x.key.length > best.key.length)) best = x;
+  return best ? best.name : null;
+}
+async function ingImg(q) {
+  const k = String(q).trim().toLowerCase(); if (!k) return '';
+  if (ingUrlCache.has(k)) return ingUrlCache.get(k);
+  const idx = await loadIngIndex(); if (!idx.length) return '';
+  const nm = findIng(q, idx);
+  const url = nm ? `https://www.themealdb.com/images/ingredients/${encodeURIComponent(nm)}-small.png` : '';
+  ingUrlCache.set(k, url); return url;
+}
 const NO_PHOTO = /^(salt|oil|cooking oil|water|sugar|ghee|butter|pepper|black pepper)$/i;
 function hydrate(root = document) {
-  root.querySelectorAll('[data-img]:not([data-d])').forEach(async (el) => {
-    el.dataset.d = '1';
-    const q = el.dataset.img; if (!q || NO_PHOTO.test(q.trim())) return;
-    const url = await wikiImg(q); if (!url) return;
+  const apply = (el, url) => {
     const im = new Image();
     im.onload = () => { if (el.isConnected) { el.style.backgroundImage = `url("${url.replace(/"/g, '%22')}")`; el.classList.add('has'); } };
     im.src = url;
+  };
+  root.querySelectorAll('[data-img]:not([data-d])').forEach(async (el) => {
+    el.dataset.d = '1';
+    const q = el.dataset.img; if (!q || NO_PHOTO.test(q.trim())) return;
+    const url = await wikiImg(q); if (url) apply(el, url);
+  });
+  root.querySelectorAll('[data-ing]:not([data-d])').forEach(async (el) => {
+    el.dataset.d = '1';
+    const url = await ingImg(el.dataset.ing); if (url) apply(el, url);
   });
 }
 const EMOJI = [[/onion/i,'🧅'],[/tomato|tamato/i,'🍅'],[/garlic/i,'🧄'],[/ginger/i,'🫚'],[/potato|aloo/i,'🥔'],[/chill?i|mirch|pepper/i,'🌶️'],
@@ -566,14 +631,15 @@ function renderResults(scroll) {
 }
 function dishCard(d, i) {
   const pct = Math.max(0, Math.min(100, Math.round(+d.match_percent || 0)));
-  const miss = (d.missing || []);
+  const miss = (d.missing || []); const saved = isSaved(d);
   return `<article class="dish" style="--i:${i}">
     <div class="dimg ph" data-img="${esc(d.photo_search || d.name)}"><span class="fb" aria-hidden="true">${esc(d.emoji || '🍽️')}</span></div>
     <div class="dtop"><div class="gchips"><span class="gchip">${ico('clock', 14)} ${esc(d.time_minutes || '?')} min</span><span class="gchip">${esc(d.difficulty || 'Easy')}</span></div>
       <div class="mring" style="--p:${pct}" role="img" aria-label="${pct} percent match"><b>${pct}</b></div></div>
     <div class="dcontent"><div class="cu">${esc(d.cuisine || '')}</div><h3>${esc(d.name)}</h3><p>${esc(d.description || '')}</p>
       <div class="uses"><span class="ok">${ico('check', 14)} ${esc((d.uses || []).slice(0, 4).join(', ') || 'your ingredients')}</span>${miss.length ? `<span class="no">+ need ${esc(miss.join(', '))}</span>` : '<span class="ok">Nothing to buy</span>'}</div>
-      <button class="btn grad block" data-cook="${i}">Start cooking ${ico('right', 18)}</button></div></article>`;
+      <div class="rowbtn"><button class="btn grad" data-cook="${i}">Start cooking ${ico('right', 18)}</button>
+        <button class="btn sq ${saved ? 'on' : ''}" data-save="${i}" aria-pressed="${saved}" aria-label="Save ${esc(d.name)}">${ico('heart', 22)}</button></div></div></article>`;
 }
 $('#found').addEventListener('click', (e) => { const b = e.target.closest('[data-ri]'); if (!b) return; state.ingredients.splice(+b.dataset.ri, 1); renderResults(false); });
 $('#addForm').addEventListener('submit', (e) => {
@@ -582,12 +648,20 @@ $('#addForm').addEventListener('submit', (e) => {
   $('#addInput').value = ''; renderResults(false);
 });
 $('#dishes').addEventListener('click', async (e) => {
+  const sv = e.target.closest('[data-save]');
+  if (sv) {
+    const d = state.dishes[+sv.dataset.save]; saveDish(d);
+    const on = isSaved(d); sv.classList.toggle('on', on); sv.setAttribute('aria-pressed', on); buzz(10);
+    return toast(on ? 'Saved to your recipes ❤️' : 'Removed from saved');
+  }
   const b = e.target.closest('[data-cook]'); if (!b) return;
   const d = state.dishes[+b.dataset.cook];
+  if (state.recipes[d.name]) return openCook(state.recipes[d.name]);
   $('#loaderTxt').textContent = `Writing the recipe for ${d.name}…`; $('#loader').classList.remove('hidden');
   try {
     const r = await api('/api/recipe', { dish: d.name, ingredients: state.ingredients, diet: [...state.diet], servings: state.servings });
-    r.photo_search = r.photo_search || d.photo_search || d.name; r.emoji = r.emoji || d.emoji;
+    r.name = d.name; r.photo_search = r.photo_search || d.photo_search || d.name; r.emoji = r.emoji || d.emoji;
+    state.recipes[d.name] = r;
     openCook(r);
   } catch (err) { showMsg(err.message, 'error'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   finally { $('#loader').classList.add('hidden'); }
@@ -597,22 +671,40 @@ $('#dishes').addEventListener('click', async (e) => {
 const isSaved = (r) => state.saved.some((s) => s.name === r.name);
 function toggleSave(r) {
   state.saved = isSaved(r) ? state.saved.filter((s) => s.name !== r.name) : [r, ...state.saved];
+  state.recipes[r.name] = r;
+  store.set('pc_saved', state.saved); renderSaved();
+}
+function saveDish(d) {
+  if (isSaved(d)) state.saved = state.saved.filter((s) => s.name !== d.name);
+  else state.saved = [state.recipes[d.name] || { name: d.name, emoji: d.emoji, photo_search: d.photo_search || d.name, cuisine: d.cuisine, summary: d.description,
+    total_time_minutes: d.time_minutes, difficulty: d.difficulty, uses: d.uses || [], missing: d.missing || [] }, ...state.saved];
   store.set('pc_saved', state.saved); renderSaved();
 }
 function renderSaved() {
-  $('#savedCount').textContent = state.saved.length ? ` ${state.saved.length}` : '';
+  $('#savedCount').textContent = state.saved.length ? String(state.saved.length) : '';
   $('#savedList').innerHTML = state.saved.length ? state.saved.map((r, i) => `<article class="dish" style="--i:${i}">
     <div class="dimg ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
-    <div class="dtop"><div class="gchips"><span class="gchip">${ico('clock', 14)} ${esc(r.total_time_minutes || '?')} min</span><span class="gchip">${esc(r.difficulty || '')}</span></div></div>
-    <div class="dcontent"><h3>${esc(r.name)}</h3><p>${esc(r.summary || '')}</p>
+    <div class="dtop"><div class="gchips"><span class="gchip">${ico('clock', 14)} ${esc(r.total_time_minutes || '?')} min</span><span class="gchip">${esc(r.difficulty || '')}</span>${r.cooked ? `<span class="gchip">🍳 Cooked ${r.cooked}×</span>` : ''}</div></div>
+    <div class="dcontent"><h3>${esc(r.name)}</h3><p>${esc(r.summary || '')}</p>${r.steps?.length ? '' : '<div class="hint">Full recipe loads when you tap Cook</div>'}
       <div class="rowbtn"><button class="btn grad" data-open="${i}">Cook ${ico('right', 18)}</button><button class="btn sq" data-del="${i}" aria-label="Remove ${esc(r.name)}">${ico('trash', 20)}</button></div></div></article>`).join('')
-    : '<div class="empty">Nothing saved yet. Open a recipe and tap the heart.</div>';
+    : '<div class="empty">Nothing saved yet. Tap the heart on any dish to keep it here.</div>';
   hydrate($('#savedList'));
+}
+async function cookSaved(i) {
+  const r = state.saved[i]; if (!r) return;
+  if (r.steps?.length) return openCook(r);
+  $('#loaderTxt').textContent = `Writing the recipe for ${r.name}…`; $('#loader').classList.remove('hidden');
+  try {
+    const full = await api('/api/recipe', { dish: r.name, ingredients: r.uses || [], diet: [...state.diet], servings: state.servings });
+    full.name = r.name; full.photo_search = full.photo_search || r.photo_search; full.emoji = full.emoji || r.emoji; full.cooked = r.cooked || 0;
+    state.saved[i] = full; store.set('pc_saved', state.saved); renderSaved(); openCook(full);
+  } catch (err) { toast(err.message.split('\n')[0]); }
+  finally { $('#loader').classList.add('hidden'); }
 }
 $('#savedList').addEventListener('click', (e) => {
   const o = e.target.closest('[data-open]'), d = e.target.closest('[data-del]');
-  if (o) openCook(state.saved[+o.dataset.open]);
-  if (d) { state.saved.splice(+d.dataset.del, 1); store.set('pc_saved', state.saved); renderSaved(); }
+  if (o) cookSaved(+o.dataset.open);
+  if (d) { state.saved.splice(+d.dataset.del, 1); store.set('pc_saved', state.saved); renderSaved(); toast('Removed from saved'); }
 });
 function setView(v) {
   $('#viewCook').classList.toggle('hidden', v !== 'cook'); $('#viewSaved').classList.toggle('hidden', v !== 'saved');
@@ -637,6 +729,8 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 async function keepAwake() { try { wake = await navigator.wakeLock?.request('screen'); } catch {} }
 function openCook(recipe) {
+  const si = state.saved.findIndex((s) => s.name === recipe.name);
+  if (si > -1 && !state.saved[si].steps?.length && recipe.steps?.length) { state.saved[si] = { ...recipe, cooked: state.saved[si].cooked || 0 }; store.set('pc_saved', state.saved); renderSaved(); }
   state.cook = { r: recipe, i: -1, timers: {}, added: new Set(), gathered: new Set(), speak: store.get('pc_speak', false), listen: false };
   const el = $('#cook'); $('#cbg').style.backgroundImage = '';
   wikiImg(recipe.photo_search || recipe.name).then((u) => { if (u && state.cook?.r === recipe) $('#cbg').style.backgroundImage = `url("${u.replace(/"/g, '%22')}")`; });
@@ -676,7 +770,10 @@ function go(to) {
   const from = c.i; c.i = Math.max(-1, Math.min(n, to)); if (c.i === from) return;
   buzz(); swap(c.i > from ? 'next' : 'prev', renderCook);
   if (c.i >= 0 && c.i < n && c.speak) speakStep();
-  if (c.i >= n) { confetti(); if (c.speak) speak('Your dish is ready. Enjoy your meal!'); }
+  if (c.i >= n) {
+    confetti(); if (c.speak) speak('Your dish is ready. Enjoy your meal!');
+    if (!c.counted) { c.counted = true; const e = state.saved.find((s) => s.name === c.r.name); if (e) { e.cooked = (e.cooked || 0) + 1; store.set('pc_saved', state.saved); } }
+  }
 }
 function confetti() {
   const box = document.createElement('div'); box.className = 'confetti';
@@ -696,7 +793,7 @@ function renderCook() {
       <div class="ctitle"><b>${esc(r.name)}</b><small>${sub}</small></div>
       <button class="ib glass ${c.speak ? 'on' : ''}" id="cspeak" aria-label="Read steps aloud" aria-pressed="${c.speak}">${ico('speaker', 20)}</button>
       ${SR ? `<button class="ib glass ${c.listen ? 'on' : ''}" id="cmic" aria-label="Voice commands" aria-pressed="${c.listen}">${ico('mic', 20)}</button>` : ''}
-      <button class="ib glass ${isSaved(r) ? 'on' : ''}" id="csave" aria-label="Save recipe">${ico('heart', 20).replace('fill="none"', isSaved(r) ? 'fill="currentColor"' : 'fill="none"')}</button>
+      <button class="ib glass heartb ${isSaved(r) ? 'on' : ''}" id="csave" aria-label="Save recipe">${ico('heart', 20).replace('fill="none"', isSaved(r) ? 'fill="currentColor"' : 'fill="none"')}</button>
     </div>
     <div class="segs">${steps.map((_, k) => `<button class="seg ${k < i ? 'done' : k === i ? 'now' : ''}" data-go="${k}" aria-label="Go to step ${k + 1}"></button>`).join('')}</div>
     <div class="pills" id="pills">${pillsHTML()}</div>
@@ -710,13 +807,14 @@ function prepHTML(r) {
   return `<div class="hero2 ph" data-img="${esc(r.photo_search || r.name)}"><span class="fb">${esc(r.emoji || '🍽️')}</span></div>
     <div class="meta"><span class="glass">${ico('clock', 16)} ${esc(r.total_time_minutes || '?')} min</span><span class="glass">${esc(r.difficulty || 'Easy')}</span><span class="glass">${ico('users', 16)} Serves ${esc(r.servings || '')}</span></div>
     ${r.summary ? `<p class="stext">${esc(r.summary)}</p>` : ''}
+    <button class="btn block ${isSaved(r) ? 'grad' : ''}" id="csave3" style="margin-top:12px">${ico('heart', 18).replace('fill="none"', isSaved(r) ? 'fill="currentColor"' : 'fill="none"')} ${isSaved(r) ? 'Saved to your recipes' : 'Save this recipe'}</button>
     <div class="lbl">Gather your ingredients <small id="gcount">${c.gathered.size} of ${list.length} ready</small></div>
     <div class="ichips">${list.map((g, k) => chipHTML(g, `g${k}`, c.gathered.has(k), g.have === false)).join('')}</div>
     ${(r.tips || []).length ? `<div class="tip"><b>Good to know</b><br>${r.tips.map(esc).join('<br>')}</div>` : ''}`;
 }
 function chipHTML(g, key, on, need) {
   return `<button class="ichip glass ${on ? 'on' : ''}" data-chip="${key}" aria-pressed="${on}">
-    <span class="ithumb" data-img="${esc(g.item)}"><span class="fb">${emojiFor(g.item)}</span></span>
+    <span class="ithumb" data-ing="${esc(g.item)}"><span class="fb">${emojiFor(g.item)}</span></span>
     <span class="itxt"><b>${esc(g.item)}</b><small>${esc(g.amount || '')}</small>${need ? '<span class="need">need to buy</span>' : ''}</span>
     <span class="tick">${ico('check', 18)}</span></button>`;
 }
@@ -857,7 +955,7 @@ $('#cook').addEventListener('click', (e) => {
   if (id === 'cx') return closeCook();
   if (id === 'cprev') return go(c.i - 1);
   if (id === 'cnext') return c.i >= n ? closeCook() : go(c.i + 1);
-  if (id === 'csave' || id === 'csave2') { toggleSave(c.r); toast(isSaved(c.r) ? 'Saved to your recipes' : 'Removed from saved'); return renderCook(); }
+  if (id === 'csave' || id === 'csave2' || id === 'csave3') { toggleSave(c.r); toast(isSaved(c.r) ? 'Saved to your recipes' : 'Removed from saved'); return renderCook(); }
   if (id === 'cshare') return shareRecipe(c.r);
   if (id === 'cspeak') { c.speak = !c.speak; store.set('pc_speak', c.speak); try { speechSynthesis.cancel(); } catch {} renderCook(); if (c.speak) (c.i >= 0 && c.i < n ? speakStep() : speak(c.r.name)); return; }
   if (id === 'cmic') return toggleListen();
